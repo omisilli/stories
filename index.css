@@ -4,7 +4,6 @@
  * Set on :root (or the viewer), in media queries for each screen size:
  *   --pg-stories-aspect       the card's width ÷ height. Default 0.5625 (9:16)
  *   --pg-stories-radius       its corners. Default 0.75rem; 0 on a phone
- *   --pg-stories-transition   from user to user: cube (default) · slide · fade
  *   --pg-stories-backdrop     behind the card
  *   --pg-stories-bar          a bar, filled · --pg-stories-bar-track, empty
  *   --pg-stories-press-shade  how dark the side pressed gets. Default 0.25
@@ -17,12 +16,6 @@
  * data-pg-stories-held="true" while a finger holds it;
  * data-pg-stories-seen="true" on the buttons of users seen to the end.
  */
-
-@property --pg-stories-transition {
-    syntax: "cube | slide | fade";
-    inherits: true;
-    initial-value: cube;
-}
 
 :root {
     --pg-stories-aspect: 0.5625;
@@ -47,7 +40,7 @@ html:has([data-pg-stories-viewer]) {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    animation: pg-stories-in 0.24s ease-out both;
+    animation: pg-stories-in 0.3s ease both;
 }
 [data-pg-stories-viewer]::before {
     content: "";
@@ -58,18 +51,17 @@ html:has([data-pg-stories-viewer]) {
     opacity: calc(1 - var(--pg-stories-drag, 0) * 0.8);
 }
 [data-pg-stories-viewer][data-pg-stories-state="closing"] {
-    animation: pg-stories-out 0.2s ease-in both;
+    animation: pg-stories-out 0.24s ease both;
 }
+/* In and out from nothing: a fade, no growing. */
 @keyframes pg-stories-in {
     from {
         opacity: 0;
-        scale: 0.96;
     }
 }
 @keyframes pg-stories-out {
     to {
         opacity: 0;
-        scale: 0.96;
     }
 }
 
@@ -96,8 +88,6 @@ html:has([data-pg-stories-viewer]) {
     position: absolute;
     inset: 0;
     transform-style: preserve-3d;
-}
-[data-pg-stories-transition="cube"] [data-pg-stories-cube] {
     transform: translateZ(calc(var(--pg-stories-half) * -1));
 }
 
@@ -111,25 +101,14 @@ html:has([data-pg-stories-viewer]) {
     -webkit-backface-visibility: hidden;
 }
 /* The cube: the faces around its centre. */
-[data-pg-stories-transition="cube"] [data-pg-stories-side="current"] {
+[data-pg-stories-side="current"] {
     transform: translateZ(var(--pg-stories-half));
 }
-[data-pg-stories-transition="cube"] [data-pg-stories-side="next"] {
+[data-pg-stories-side="next"] {
     transform: rotateY(90deg) translateZ(var(--pg-stories-half));
 }
-[data-pg-stories-transition="cube"] [data-pg-stories-side="prev"] {
+[data-pg-stories-side="prev"] {
     transform: rotateY(-90deg) translateZ(var(--pg-stories-half));
-}
-/* A slide: side by side. */
-[data-pg-stories-transition="slide"] [data-pg-stories-side="next"] {
-    transform: translateX(100%);
-}
-[data-pg-stories-transition="slide"] [data-pg-stories-side="prev"] {
-    transform: translateX(-100%);
-}
-/* A fade: only the current one. */
-[data-pg-stories-transition="fade"] [data-pg-stories-side]:not([data-pg-stories-side="current"]) {
-    display: none;
 }
 
 /* The stories: one shown, filling the card. */

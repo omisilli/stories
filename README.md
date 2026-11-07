@@ -6,7 +6,7 @@ from one person to the next, videos with sound on a tap. Full screen on a
 phone, a card on a computer. No dependencies, framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v1.3.0
+npm install github:omisilli/stories#v2.0.0
 ```
 
 ```ts
@@ -36,16 +36,16 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/dist/index.js";
 
     initStories();
 </script>
 ```
 
-Pin the version on a live site. A pinned URL never changes; `@1` follows
-the newest 1.x release.
+Pin the version on a live site. A pinned URL never changes; `@2` follows
+the newest 2.x release.
 
 ## In the viewer
 
@@ -63,7 +63,14 @@ the newest 1.x release.
 - **How long.** A picture or HTML stays `data-pg-stories-duration` ms — on
   the item, the person or the group; default `5000`. A video, its own
   length. The bar waits while a picture or a video loads.
-- **After the last person,** it closes.
+- **After a person's last story** — by the clock or a tap — what comes is
+  `data-pg-stories-end`, on the person or the whole group:
+
+  | `data-pg-stories-end` | After a person's last story                         |
+  | --------------------- | --------------------------------------------------- |
+  | `next` (default)      | The next person; after the last one, it closes      |
+  | `close`               | It closes — one person at a time                    |
+  | `stay`                | The next person; the last one stays open, its bar full — closed only by hand |
 - **Nothing closes it by accident.** A click beside the card does nothing,
   and a press that wanders off the card — a drag that ends outside it —
   does not close it either. Pulling down to close is a finger's gesture:
@@ -91,6 +98,7 @@ the newest 1.x release.
 | `data-pg-stories-item`       | a box in the person      | One story: a picture, a video, or any HTML                |
 | `data-pg-stories-time`       | a story                  | Shown beside the name, as written: `2h`, `yesterday`      |
 | `data-pg-stories-duration`   | a story, person or group | Milliseconds for a picture or HTML. Default `5000`        |
+| `data-pg-stories-end`        | a person or group        | After a person's last story: `next` · `close` · `stay`    |
 | `data-pg-stories-seen`       | an open button           | `"true"` once that person was seen to the end — written here |
 
 **The viewer is built from copies.** When it opens, it is made on `<body>`
@@ -109,14 +117,13 @@ query:
 | ------------------------- | ------------------ | ----------------------------------------------- |
 | `--pg-stories-aspect`     | `0.5625` (9:16)    | The card's width ÷ height                       |
 | `--pg-stories-radius`     | `0.75rem`; `0` on a phone | Its corners                              |
-| `--pg-stories-transition` | `cube`             | From person to person: `cube`, `slide`, `fade`  |
 | `--pg-stories-backdrop`   | near black         | Behind the card                                 |
 | `--pg-stories-bar`        | white              | A bar, filled                                   |
 | `--pg-stories-bar-track`  | white, 35%         | A bar, empty                                    |
 | `--pg-stories-press-shade`| `0.25`             | How dark the side pressed gets, at its edge     |
 
-Below 40rem the card fills the screen. With reduced motion asked for, the
-transition is a fade.
+Below 40rem the card fills the screen. It opens and closes with a fade.
+With reduced motion asked for, the cube turns at once.
 
 States, for your own CSS: `data-pg-stories-state` on the viewer —
 `opening`, `open`, `closing`; `data-pg-stories-held="true"` while held.
@@ -168,9 +175,17 @@ remounting in development), only the newest call answers.
 
 [`examples/static/index.html`](examples/static/index.html) — open it by
 double-clicking. Five people: photos, two videos with sound, HTML stories,
-a landscape picture cropped to the card. Switches for the transition (cube,
-slide, fade), how long a picture stays, and forgetting what was seen.
+a landscape picture cropped to the card. Switches for what comes after a
+person (`data-pg-stories-end`), how long a picture stays, and forgetting
+what was seen.
 
 The photos are from [Lorem Picsum](https://picsum.photos) — Unsplash
 photos, free to use, loaded from there. The two videos were made for this
 example.
+
+## Upgrading from 1.x
+
+From person to person is always the cube now: `--pg-stories-transition`
+(and its `slide` and `fade`) is gone — delete it. Everything else works as
+before; new is `data-pg-stories-end`, and opening is a plain fade, without
+the slight growing.

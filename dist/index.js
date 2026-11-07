@@ -25,9 +25,11 @@
  *   - Tap the right 70%: the next story; the left 30%: the one before — a
  *     shade comes in on that side while pressed. Hold anywhere: paused,
  *     while held (the bars and header hide).
- *   - Drag sideways: to the next or previous user, on a 3D cube —
- *     --pg-stories-transition: cube (default) · slide · fade, in CSS.
- *     With reduced motion, fade.
+ *   - Drag sideways: to the next or previous user, on a 3D cube. With
+ *     reduced motion, at once.
+ *   - After a user's last story: data-pg-stories-end, on the user or the
+ *     group — next (default): the next user, closed after the last one;
+ *     close: closed; stay: the next user, and the last one stays open.
  *   - Escape, the × or the browser's Back: closed; on a touch screen, a
  *     drag down too. A click beside the card does nothing — a press that
  *     wanders off the card does not close it. The arrow keys go on and back.
@@ -49,6 +51,10 @@ const SEEN_KEY = "pg-stories-seen";
 const HOLD = 220;
 /* The left part of a story that goes back; the rest goes on. */
 const PREV_ZONE = 0.3;
+const endOf = (el) => {
+    const v = el.getAttribute("data-pg-stories-end");
+    return v === "next" || v === "close" || v === "stay" ? v : null;
+};
 /* ---------- Seen, kept in this browser ---------- */
 function seenSet() {
     try {
@@ -91,6 +97,7 @@ function reducedMotion() {
 }
 function usersOf(group) {
     const groupDuration = Number(group.getAttribute("data-pg-stories-duration")) || DEFAULT_DURATION;
+    const groupEnd = endOf(group) || "next";
     return [...group.querySelectorAll(`[${USER}]`)].map((source) => ({
         id: source.getAttribute(USER) || "",
         name: source.getAttribute("data-pg-stories-name") || source.getAttribute(USER) || "",
@@ -98,6 +105,7 @@ function usersOf(group) {
         source,
         items: [...source.querySelectorAll(`[${ITEM}]`)],
         duration: Number(source.getAttribute("data-pg-stories-duration")) || groupDuration,
+        end: endOf(source) || groupEnd,
     }));
 }
 const SOUND_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -174,13 +182,6 @@ function openViewer(users, start, opener) {
     stage.append(cube);
     root.append(stage);
     document.body.append(root);
-    const css = (name) => getComputedStyle(root).getPropertyValue(name).trim();
-    const transition = () => {
-        if (reducedMotion())
-            return "fade";
-        const t = css("--pg-stories-transition");
-        return t === "slide" || t === "fade" ? t : "cube";
-    };
     let u = start; // user
     let s = 0; // story
     let faces = [null, null, null]; // prev, current, next
@@ -192,10 +193,10 @@ function openViewer(users, start, opener) {
     let closed = false;
     let turning = false;
     let tween = 0;
+    let resting = false;
     // ---- Faces: the current user, and one each side for the cube ----
     const layout = () => {
         root.style.setProperty("--pg-stories-half", `${stage.clientWidth / 2}px`);
-        root.setAttribute("data-pg-stories-transition", transition());
         cube.replaceChildren();
         faces = [u - 1, u, u + 1].map((i, k) => {
             if (!users[i])
@@ -245,6 +246,7 @@ function openViewer(users, start, opener) {
         const hasVideo = !!face.slides[s].querySelector("video");
         face.sound.hidden = !hasVideo;
         elapsed = 0;
+        resting = false;
         // Load the next one in the meantime.
         const next = face.slides[s + 1]?.querySelector("video");
         if (next)
@@ -286,21 +288,28 @@ function openViewer(users, start, opener) {
             progress = elapsed / durationOf();
         }
         face.bars[s]?.style.setProperty("--pg-stories-progress", String(Math.min(1, progress)));
-        if (progress >= 1)
+        if (progress >= 1 && !resting) {
+            const at = s;
             next();
+            // Still on the same story: stay keeps it there, bar full.
+            if (s === at && !turning && !closed)
+                resting = true;
+        }
     };
     // ---- Moving on ----
+    // After a user's last story, by the clock or a tap: data-pg-stories-end.
     const next = () => {
         if (s < current().slides.length - 1) {
             s++;
             show();
+            return;
         }
-        else if (users[u + 1]) {
+        const end = users[u].end;
+        if (end !== "close" && users[u + 1])
             turn(1);
-        }
-        else {
+        else if (end !== "stay")
             close();
-        }
+        // stay, on the last user: it rests on its last story.
     };
     const prev = () => {
         if (s > 0) {
@@ -314,38 +323,26 @@ function openViewer(users, start, opener) {
             show(); // the first story again, from its start
         }
     };
-    // ---- From user to user: cube, slide or fade ----
+    // ---- From user to user: a cube ----
     const width = () => stage.clientWidth;
-    const pose = (offset) => {
-        // offset: -1 … 1 of a turn; positive goes on to the next user. The
-        // faces are placed by index.css around the cube's centre, half a
-        // width behind the screen; turning it is turning that centre.
-        const t = transition();
-        if (t === "cube")
-            return `translateZ(calc(var(--pg-stories-half) * -1)) rotateY(${offset * -90}deg)`;
-        if (t === "slide")
-            return `translateX(${offset * -100}%)`;
-        return "";
-    };
+    // offset: -1 … 1 of a turn; positive goes on to the next user. The faces
+    // are placed by index.css around the cube's centre, half a width behind
+    // the screen; turning it is turning that centre.
+    const pose = (offset) => `translateZ(calc(var(--pg-stories-half) * -1)) rotateY(${offset * -90}deg)`;
     // The cube at an offset — and its shading: the face turning away
     // darkens, the one coming in comes out of the dark.
     const SHADE = 0.75;
     const place = (offset) => {
         cube.style.transform = pose(offset);
-        const cubeMode = transition() === "cube";
         const away = Math.abs(offset);
         faces.forEach((face, k) => {
             if (!face)
                 return;
-            let dark = 0;
-            if (cubeMode) {
-                if (k === 1)
-                    dark = away * SHADE;
-                else if ((k === 2 && offset > 0) || (k === 0 && offset < 0))
-                    dark = (1 - away) * SHADE;
-                else
-                    dark = SHADE;
-            }
+            let dark = SHADE;
+            if (k === 1)
+                dark = away * SHADE;
+            else if ((k === 2 && offset > 0) || (k === 0 && offset < 0))
+                dark = (1 - away) * SHADE;
             face.root.style.setProperty("--pg-stories-shade", dark.toFixed(3));
         });
     };
@@ -369,21 +366,15 @@ function openViewer(users, start, opener) {
             return;
         turning = true;
         current().slides.forEach((slide) => slide.querySelector("video")?.pause());
-        const t = transition();
         const done = () => {
             u += dir;
             s = 0;
             layout();
             show();
             turning = false;
-            if (t === "fade") {
-                cube.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: "ease-out" });
-            }
         };
-        if (t === "fade") {
-            cube.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-in" }).finished.then(done, done);
-            return;
-        }
+        if (reducedMotion())
+            return done();
         glide(from, dir, Math.round(480 * (1 - Math.abs(from)) + 160), done);
     };
     // ---- Pointer: tap, hold, drag sideways, drag down ----
@@ -414,7 +405,7 @@ function openViewer(users, start, opener) {
             clearTimeout(holdTimer);
             held = true; // nothing plays on while it is dragged — the press shade stays till release
         }
-        if (down.axis === "x" && transition() !== "fade") {
+        if (down.axis === "x" && !reducedMotion()) {
             let offset = -dx / width();
             // No user that way: it gives a little, then stops.
             if ((offset > 0 && !users[u + 1]) || (offset < 0 && !users[u - 1]))
@@ -450,10 +441,10 @@ function openViewer(users, start, opener) {
             const dir = offset > 0 ? 1 : -1;
             const at = Math.max(-1, Math.min(1, offset));
             if ((Math.abs(offset) > 0.25 || fast) && users[u + dir]) {
-                turn(dir, transition() === "fade" ? 0 : at);
+                turn(dir, at);
             }
-            else if (transition() !== "fade") {
-                glide(at, 0, 260);
+            else {
+                glide(at, 0, reducedMotion() ? 1 : 260);
             }
             return;
         }

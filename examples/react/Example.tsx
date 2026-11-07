@@ -70,8 +70,10 @@ export function Avatars() {
  * the sound on.
  */
 export function StorySources() {
+    // data-pg-stories-end: after a person's last story — next (default; the
+    // last person closes it), close, or stay. Here, or on one person.
     return (
-        <div data-pg-stories hidden>
+        <div data-pg-stories hidden data-pg-stories-end="next">
             {people.map((p) => (
                 <div key={p.id} data-pg-stories-user={p.id} data-pg-stories-name={p.name} data-pg-stories-avatar={p.avatar}>
                     {p.stories.map((s, i) => (

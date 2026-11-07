@@ -2,13 +2,13 @@
 <!-- Open by double-clicking: the script loads from jsDelivr, the two videos
      sit beside this file, the photos come from Lorem Picsum (Unsplash
      photos, free to use). Pinned to this release, so the page and the code
-     always match. The switches reload the page with ?t and ?d. -->
+     always match. The switches reload the page with ?e and ?d. -->
 <html lang="en">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>stories — example</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/index.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/index.css" />
         <style>
             :root {
                 --bg: #f6f6f4;
@@ -182,17 +182,18 @@
             <h1>stories</h1>
             <p>
                 Press an avatar. Tap the right of a story for the next one, the left for the one before; hold to
-                pause; drag sideways to the next person, on a cube; Escape, × or the browser's Back to close — on a
+                pause; drag sideways to the next person, on a cube; after the last person
+                it closes — or, with the switch, after each one, or never by itself; Escape, × or the browser's Back to close — on a
                 phone, pull down too. A click beside the card does nothing. A person seen to the end goes grey — kept
                 in this browser.
             </p>
 
             <div class="switches">
                 <div>
-                    <span>From person to person</span>
-                    <a data-q="t" data-v="">cube</a>
-                    <a data-q="t" data-v="slide">slide</a>
-                    <a data-q="t" data-v="fade">fade</a>
+                    <span>After a person</span>
+                    <a data-q="e" data-v="">next, then close</a>
+                    <a data-q="e" data-v="close">close</a>
+                    <a data-q="e" data-v="stay">next, then stay</a>
                 </div>
                 <div>
                     <span>A picture stays</span>
@@ -276,16 +277,17 @@
         </div>
 
         <script type="module">
-            import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/dist/index.js";
+            import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/dist/index.js";
 
             initStories();
 
             // The switches: what a stylesheet, or the markup, would set.
             const query = new URLSearchParams(location.search);
-            const t = query.get("t");
-            if (t) document.documentElement.style.setProperty("--pg-stories-transition", t);
+            const group = document.querySelector("[data-pg-stories]");
+            const e = query.get("e");
+            if (e) group.setAttribute("data-pg-stories-end", e);
             const d = query.get("d");
-            if (d) document.querySelector("[data-pg-stories]").setAttribute("data-pg-stories-duration", d);
+            if (d) group.setAttribute("data-pg-stories-duration", d);
 
             document.querySelectorAll("[data-q]").forEach((a) => {
                 const next = new URLSearchParams(query);
