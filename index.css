@@ -228,6 +228,16 @@ html:has([data-pg-stories-viewer]) {
     margin-left: auto;
 }
 
+/* The cube's shading: a face darkens as it turns away. */
+[data-pg-stories-shade] {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: #000;
+    opacity: var(--pg-stories-shade, 0);
+    pointer-events: none;
+}
+
 /* Held: the bars and the name step back, the story stays. */
 [data-pg-stories-bars],
 [data-pg-stories-head],

@@ -6,7 +6,7 @@ from one person to the next, videos with sound on a tap. Full screen on a
 phone, a card on a computer. No dependencies, framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v1.0.0
+npm install github:omisilli/stories#v1.1.0
 ```
 
 ```ts
@@ -36,9 +36,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.0.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.0/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.0.0/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.0/dist/index.js";
 
     initStories();
 </script>
@@ -55,14 +55,22 @@ the newest 1.x release.
 | Tap the right two-thirds · →         | The next story                                        |
 | Tap the left third · ←               | The story before — or the person before               |
 | Hold anywhere                        | Paused while held; the bars and the name step back    |
-| Drag sideways                        | The next or the person before, on a cube — it follows the finger, and goes on past a quarter, or with a flick |
-| Drag down · Escape · × · the dark around it | Closed                                         |
+| Drag sideways                        | The next or the person before, on a cube — it follows the finger, and goes on past a quarter, or with a flick; the face turning away darkens, the one coming in comes out of the dark |
+| Escape · × · the browser's Back      | Closed                                                |
+| Pull down, on a touch screen         | Closed                                                |
 | The speaker                          | Sound on for every video, until closed                |
 
 - **How long.** A picture or HTML stays `data-pg-stories-duration` ms — on
   the item, the person or the group; default `5000`. A video, its own
   length. The bar waits while a picture or a video loads.
 - **After the last person,** it closes.
+- **Nothing closes it by accident.** A click beside the card does nothing,
+  and a press that wanders off the card — a drag that ends outside it —
+  does not close it either. Pulling down to close is a finger's gesture:
+  with a mouse, the card never moves down.
+- **Back closes it.** Opening it adds one entry to the history, so a
+  phone's Back gesture closes the stories instead of leaving the page;
+  closing it any other way takes that entry back.
 - **Seen.** A person whose last story was shown gets
   `data-pg-stories-seen="true"` on every `data-pg-stories-open` button for
   them — kept in this browser (localStorage), so the ring can go grey.

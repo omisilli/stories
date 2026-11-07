@@ -27,7 +27,9 @@
  *   - Drag sideways: to the next or previous user, on a 3D cube —
  *     --pg-stories-transition: cube (default) · slide · fade, in CSS.
  *     With reduced motion, fade.
- *   - Drag down, Escape or the ×: closed. The arrow keys go on and back.
+ *   - Escape, the × or the browser's Back: closed; on a touch screen, a
+ *     drag down too. A click beside the card does nothing — a press that
+ *     wanders off the card does not close it. The arrow keys go on and back.
  *   - Videos play muted; the speaker turns the sound on for all of them.
  *   - A user whose last story was seen gets data-pg-stories-seen="true" on
  *     their data-pg-stories-open buttons — kept in this browser.
@@ -164,7 +166,9 @@ function buildFace(user: User, label: string): Face {
         box.append(slide);
         return slide;
     });
-    root.append(box, barsBox, head);
+    // Darkens the face as the cube turns it away.
+    const shade = el("div", { "data-pg-stories-shade": "", "aria-hidden": "true" });
+    root.append(box, barsBox, head, shade);
     return { root, bars, slides, sound };
 }
 
@@ -205,6 +209,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
     let muted = true;
     let closed = false;
     let turning = false;
+    let tween = 0;
 
     // ---- Faces: the current user, and one each side for the cube ----
     const layout = (): void => {
@@ -224,7 +229,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             return face;
         });
         cube.style.transform = "";
-        cube.style.transition = "";
+        place(0);
     };
 
     const current = () => faces[1] as Face;
@@ -320,13 +325,46 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
     // ---- From user to user: cube, slide or fade ----
     const width = () => stage.clientWidth;
     const pose = (offset: number): string => {
-        // offset: -1 … 1 of a turn; negative goes on to the next user.
-        // The faces are placed by index.css around the cube's centre, half
-        // a width behind the screen; turning it is turning that centre.
+        // offset: -1 … 1 of a turn; positive goes on to the next user. The
+        // faces are placed by index.css around the cube's centre, half a
+        // width behind the screen; turning it is turning that centre.
         const t = transition();
         if (t === "cube") return `translateZ(calc(var(--pg-stories-half) * -1)) rotateY(${offset * -90}deg)`;
         if (t === "slide") return `translateX(${offset * -100}%)`;
         return "";
+    };
+
+    // The cube at an offset — and its shading: the face turning away
+    // darkens, the one coming in comes out of the dark.
+    const SHADE = 0.6;
+    const place = (offset: number): void => {
+        cube.style.transform = pose(offset);
+        const cubeMode = transition() === "cube";
+        const away = Math.abs(offset);
+        faces.forEach((face, k) => {
+            if (!face) return;
+            let dark = 0;
+            if (cubeMode) {
+                if (k === 1) dark = away * SHADE;
+                else if ((k === 2 && offset > 0) || (k === 0 && offset < 0)) dark = (1 - away) * SHADE;
+                else dark = SHADE;
+            }
+            face.root.style.setProperty("--pg-stories-shade", dark.toFixed(3));
+        });
+    };
+
+    // From one offset to another, frame by frame, easing out.
+    const glide = (from: number, to: number, ms: number, done?: () => void): void => {
+        cancelAnimationFrame(tween);
+        const t0 = performance.now();
+        const step = (now: number): void => {
+            const t = Math.min(1, (now - t0) / ms);
+            const e = 1 - Math.pow(1 - t, 3);
+            place(from + (to - from) * e);
+            if (t < 1) tween = requestAnimationFrame(step);
+            else done?.();
+        };
+        tween = requestAnimationFrame(step);
     };
 
     const turn = (dir: 1 | -1, from = 0): void => {
@@ -348,29 +386,17 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             cube.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-in" }).finished.then(done, done);
             return;
         }
-        cube.style.transition = "none";
-        cube.style.transform = pose(from);
-        void cube.offsetWidth;
-        cube.style.transition = `transform ${Math.round(420 * (1 - Math.abs(from)) + 120)}ms cubic-bezier(0.25, 0.8, 0.3, 1)`;
-        cube.style.transform = pose(dir);
-        let finished = false;
-        const end = () => {
-            if (finished) return;
-            finished = true;
-            done();
-        };
-        cube.addEventListener("transitionend", end, { once: true });
-        setTimeout(end, 700);
+        glide(from, dir, Math.round(480 * (1 - Math.abs(from)) + 160), done);
     };
 
     // ---- Pointer: tap, hold, drag sideways, drag down ----
-    let down: { x: number; y: number; t: number; axis: "" | "x" | "y"; id: number } | null = null;
+    let down: { x: number; y: number; t: number; axis: "" | "x" | "y"; id: number; touch: boolean } | null = null;
     let holdTimer = 0;
 
     const onDown = (e: PointerEvent): void => {
         if (turning || e.button > 0) return;
         if ((e.target as Element).closest("button, a, input, textarea, select")) return;
-        down = { x: e.clientX, y: e.clientY, t: performance.now(), axis: "", id: e.pointerId };
+        down = { x: e.clientX, y: e.clientY, t: performance.now(), axis: "", id: e.pointerId, touch: e.pointerType !== "mouse" };
         stage.setPointerCapture(e.pointerId);
         holdTimer = window.setTimeout(() => {
             held = true;
@@ -391,9 +417,10 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             let offset = -dx / width();
             // No user that way: it gives a little, then stops.
             if ((offset > 0 && !users[u + 1]) || (offset < 0 && !users[u - 1])) offset *= 0.15;
-            cube.style.transition = "none";
-            cube.style.transform = pose(Math.max(-1, Math.min(1, offset)));
-        } else if (down.axis === "y" && dy > 0) {
+            cancelAnimationFrame(tween);
+            place(Math.max(-1, Math.min(1, offset)));
+        } else if (down.axis === "y" && dy > 0 && down.touch) {
+            // Pulled down to close — a finger's gesture; a mouse never moves the card.
             stage.style.transition = "none";
             stage.style.transform = `translateY(${dy}px) scale(${1 - Math.min(dy / 2000, 0.15)})`;
             root.style.setProperty("--pg-stories-drag", String(Math.min(dy / 400, 1)));
@@ -407,6 +434,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
         const dy = e.clientY - down.y;
         const dt = Math.max(1, performance.now() - down.t);
         const axis = down.axis;
+        const touch = down.touch;
         const wasHeld = root.getAttribute("data-pg-stories-held") === "true";
         down = null;
         held = false;
@@ -417,21 +445,22 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             const offset = -dx / width();
             const fast = Math.abs(dx) / dt > 0.5;
             const dir: 1 | -1 = offset > 0 ? 1 : -1;
+            const at = Math.max(-1, Math.min(1, offset));
             if ((Math.abs(offset) > 0.25 || fast) && users[u + dir]) {
-                turn(dir, transition() === "fade" ? 0 : Math.max(-1, Math.min(1, offset)));
+                turn(dir, transition() === "fade" ? 0 : at);
             } else if (transition() !== "fade") {
-                cube.style.transition = "transform 260ms cubic-bezier(0.25, 0.8, 0.3, 1)";
-                cube.style.transform = pose(0);
+                glide(at, 0, 260);
             }
             return;
         }
-        if (axis === "y") {
+        if (axis === "y" && touch) {
             if (dy > 120 || (dy > 30 && dy / dt > 0.6)) return close();
             stage.style.transition = "transform 220ms ease-out";
             stage.style.transform = "";
             root.style.setProperty("--pg-stories-drag", "0");
             return;
         }
+        if (axis === "y") return; // a mouse dragged up or down: nothing
         // A tap, not a hold: back on the left third, on otherwise.
         if (!wasHeld) {
             const box = stage.getBoundingClientRect();
@@ -455,8 +484,8 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             });
             return;
         }
-        // A click on the dark around the card closes it.
-        if (target === root) close();
+        // A click beside the card does nothing: only the ×, Escape, Back
+        // and a finger's pull down close it.
     };
 
     const onKey = (e: KeyboardEvent): void => {
@@ -480,10 +509,21 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
         root.style.setProperty("--pg-stories-half", `${stage.clientWidth / 2}px`);
     };
 
-    const close = (instant = false): void => {
+    // The browser's Back closes it: one history entry while it is open.
+    const onPop = (): void => {
+        if (!(history.state && history.state.pgStories)) close(false, true);
+    };
+
+    const close = (instant = false, fromBack = false): void => {
         if (closed) return;
         closed = true;
         removeEventListener("resize", onResize);
+        removeEventListener("popstate", onPop);
+        cancelAnimationFrame(tween);
+        // Closed by its own buttons: take back the entry it added. Not when
+        // closed from code (a page change, React cleaning up) — that would
+        // take the visitor back a page.
+        if (!fromBack && !instant && history.state && history.state.pgStories) history.back();
         cancelAnimationFrame(frame);
         clearTimeout(holdTimer);
         root.querySelectorAll("video").forEach((v) => v.pause());
@@ -508,6 +548,8 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
     root.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey, true);
     addEventListener("resize", onResize);
+    history.pushState({ ...(history.state || {}), pgStories: true }, "");
+    addEventListener("popstate", onPop);
 
     layout();
     show();
