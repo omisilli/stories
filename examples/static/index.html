@@ -1,0 +1,302 @@
+<!doctype html>
+<!-- Open by double-clicking: the script loads from jsDelivr, the two videos
+     sit beside this file, the photos come from Lorem Picsum (Unsplash
+     photos, free to use). Pinned to this release, so the page and the code
+     always match. The switches reload the page with ?t and ?d. -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>stories — example</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.0.0/index.css" />
+        <style>
+            :root {
+                --bg: #f6f6f4;
+                --surface: #ffffff;
+                --fg: #18181b;
+                --muted: #6b6b72;
+                --line: #e4e4e0;
+                color-scheme: light dark;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg: #111113;
+                    --surface: #1b1b1f;
+                    --fg: #ededef;
+                    --muted: #9a9aa3;
+                    --line: #2c2c31;
+                }
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+            }
+            body {
+                font:
+                    16px/1.6 system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+                color: var(--fg);
+                background: var(--bg);
+            }
+            code {
+                font:
+                    0.85em/1.4 ui-monospace,
+                    SFMono-Regular,
+                    Menlo,
+                    monospace;
+                padding: 0.15em 0.4em;
+                border-radius: 0.35em;
+                background: color-mix(in srgb, var(--fg) 8%, transparent);
+            }
+            main {
+                max-width: 46rem;
+                margin: 0 auto;
+                padding: 3rem 1.25rem 6rem;
+                display: grid;
+                gap: 1.5rem;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            h2 {
+                font-size: 1.1rem;
+            }
+            p {
+                color: var(--muted);
+            }
+            .switches {
+                display: grid;
+                gap: 0.6rem;
+                font-size: 0.9rem;
+            }
+            .switches > div {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .switches span {
+                min-width: 10rem;
+                color: var(--muted);
+            }
+            .switches a,
+            .switches button {
+                font: inherit;
+                color: inherit;
+                text-decoration: none;
+                padding: 0.3rem 0.7rem;
+                border: 1px solid var(--line);
+                border-radius: 0.5rem;
+                background: var(--surface);
+                cursor: pointer;
+            }
+            .switches a[aria-current="true"] {
+                background: var(--fg);
+                color: var(--bg);
+                border-color: var(--fg);
+            }
+
+            /* The row of avatars: it scrolls sideways, edge to edge. */
+            .avatars {
+                display: flex;
+                gap: 1rem;
+                overflow-x: auto;
+                scrollbar-width: none;
+                margin-inline: -1.25rem;
+                padding: 0.25rem 1.25rem 0.5rem;
+            }
+            .avatars button {
+                flex: none;
+                display: grid;
+                justify-items: center;
+                gap: 0.35rem;
+                width: 5rem;
+                padding: 0;
+                border: 0;
+                font: inherit;
+                font-size: 0.8rem;
+                color: inherit;
+                background: none;
+                cursor: pointer;
+            }
+            /* A ring: bright while there is something new, grey once seen. */
+            .avatars .ring {
+                display: grid;
+                place-items: center;
+                width: 4.5rem;
+                height: 4.5rem;
+                border-radius: 50%;
+                background: conic-gradient(from 200deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
+            }
+            .avatars button[data-pg-stories-seen="true"] .ring {
+                background: var(--line);
+            }
+            .avatars img {
+                width: calc(100% - 6px);
+                height: calc(100% - 6px);
+                border-radius: 50%;
+                border: 3px solid var(--bg);
+                object-fit: cover;
+            }
+
+            /* An HTML story: anything at all. */
+            .card {
+                display: grid;
+                align-content: center;
+                gap: 1rem;
+                width: 100%;
+                height: 100%;
+                padding: 2rem 1.75rem;
+                color: #fff;
+                background: linear-gradient(160deg, #2f5bea, #962fbf 60%, #d62976);
+            }
+            .card h3 {
+                font-size: 1.8rem;
+                line-height: 1.15;
+            }
+            .card p {
+                color: rgb(255 255 255 / 0.85);
+            }
+            .card a {
+                justify-self: start;
+                padding: 0.6rem 1rem;
+                border-radius: 999px;
+                color: #18181b;
+                background: #fff;
+                text-decoration: none;
+                font-weight: 600;
+            }
+            .card ul {
+                display: grid;
+                gap: 0.35rem;
+                padding-left: 1.1rem;
+                color: rgb(255 255 255 / 0.9);
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>stories</h1>
+            <p>
+                Press an avatar. Tap the right of a story for the next one, the left for the one before; hold to
+                pause; drag sideways to the next person, on a cube; drag down, Escape or × to close. A person seen to
+                the end goes grey — kept in this browser.
+            </p>
+
+            <div class="switches">
+                <div>
+                    <span>From person to person</span>
+                    <a data-q="t" data-v="">cube</a>
+                    <a data-q="t" data-v="slide">slide</a>
+                    <a data-q="t" data-v="fade">fade</a>
+                </div>
+                <div>
+                    <span>A picture stays</span>
+                    <a data-q="d" data-v="">5 s</a>
+                    <a data-q="d" data-v="3000">3 s</a>
+                    <a data-q="d" data-v="8000">8 s</a>
+                </div>
+                <div>
+                    <span>Seen</span>
+                    <button type="button" id="forget">Forget what was seen</button>
+                </div>
+            </div>
+
+            <!-- The avatars: any button, anywhere, opens a person by id. -->
+            <div class="avatars">
+                <button type="button" data-pg-stories-open="ada">
+                    <span class="ring"><img src="https://picsum.photos/id/1011/160/160" alt="" /></span>ada
+                </button>
+                <button type="button" data-pg-stories-open="mert">
+                    <span class="ring"><img src="https://picsum.photos/id/1025/160/160" alt="" /></span>mert
+                </button>
+                <button type="button" data-pg-stories-open="deniz">
+                    <span class="ring"><img src="https://picsum.photos/id/1015/160/160" alt="" /></span>deniz
+                </button>
+                <button type="button" data-pg-stories-open="plusguard">
+                    <span class="ring"><img src="https://picsum.photos/id/1036/160/160" alt="" /></span>plusguard
+                </button>
+                <button type="button" data-pg-stories-open="selin">
+                    <span class="ring"><img src="https://picsum.photos/id/1069/160/160" alt="" /></span>selin
+                </button>
+            </div>
+
+            <h2>The stories</h2>
+            <p>
+                Written once, hidden: <code>data-pg-stories</code> holds a <code>data-pg-stories-user</code> for each
+                person, and each of theirs is a <code>data-pg-stories-item</code> — a picture, a video, or any HTML.
+                The viewer is built from copies; this markup is never touched.
+            </p>
+        </main>
+
+        <div data-pg-stories hidden>
+            <div data-pg-stories-user="ada" data-pg-stories-name="ada" data-pg-stories-avatar="https://picsum.photos/id/1011/160/160">
+                <div data-pg-stories-item data-pg-stories-time="2h"><img src="https://picsum.photos/id/1011/720/1280" alt="A canoe on a lake" /></div>
+                <div data-pg-stories-item data-pg-stories-time="2h"><img src="https://picsum.photos/id/1016/720/1280" alt="Canyon walls" /></div>
+                <div data-pg-stories-item data-pg-stories-time="1h"><img src="https://picsum.photos/id/1018/720/1280" alt="Mountains in the mist" /></div>
+            </div>
+            <div data-pg-stories-user="mert" data-pg-stories-name="mert" data-pg-stories-avatar="https://picsum.photos/id/1025/160/160">
+                <div data-pg-stories-item data-pg-stories-time="5h"><video src="./media/dusk.mp4" muted playsinline></video></div>
+                <div data-pg-stories-item data-pg-stories-time="4h"><img src="https://picsum.photos/id/1025/720/1280" alt="A dog in a blanket" /></div>
+            </div>
+            <div data-pg-stories-user="deniz" data-pg-stories-name="deniz" data-pg-stories-avatar="https://picsum.photos/id/1015/160/160">
+                <div data-pg-stories-item data-pg-stories-time="8h"><img src="https://picsum.photos/id/1015/720/1280" alt="A river between rocks" /></div>
+                <div data-pg-stories-item data-pg-stories-time="7h" data-pg-stories-duration="8000">
+                    <div class="card">
+                        <h3>Any HTML is a story</h3>
+                        <p>This one stays eight seconds — <code>data-pg-stories-duration="8000"</code> on it.</p>
+                        <a href="#">A link in a story →</a>
+                    </div>
+                </div>
+            </div>
+            <div data-pg-stories-user="plusguard" data-pg-stories-name="plusguard" data-pg-stories-avatar="https://picsum.photos/id/1036/160/160">
+                <div data-pg-stories-item data-pg-stories-time="now" data-pg-stories-duration="9000">
+                    <div class="card">
+                        <h3>stories</h3>
+                        <ul>
+                            <li>A bar per story, filling as it plays</li>
+                            <li>Tap on, tap back, hold to pause</li>
+                            <li>A cube between people</li>
+                            <li>Videos, with sound on a tap</li>
+                            <li>No dependencies</li>
+                        </ul>
+                    </div>
+                </div>
+                <div data-pg-stories-item data-pg-stories-time="now"><video src="./media/bubbles.mp4" muted playsinline></video></div>
+            </div>
+            <div data-pg-stories-user="selin" data-pg-stories-name="selin" data-pg-stories-avatar="https://picsum.photos/id/1069/160/160">
+                <div data-pg-stories-item data-pg-stories-time="12h"><img src="https://picsum.photos/id/1069/720/1280" alt="A jellyfish" /></div>
+                <!-- A landscape picture: cover crops it to the card. -->
+                <div data-pg-stories-item data-pg-stories-time="11h"><img src="https://picsum.photos/id/1043/1280/720" alt="A field under a cloudy sky" /></div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.0.0/dist/index.js";
+
+            initStories();
+
+            // The switches: what a stylesheet, or the markup, would set.
+            const query = new URLSearchParams(location.search);
+            const t = query.get("t");
+            if (t) document.documentElement.style.setProperty("--pg-stories-transition", t);
+            const d = query.get("d");
+            if (d) document.querySelector("[data-pg-stories]").setAttribute("data-pg-stories-duration", d);
+
+            document.querySelectorAll("[data-q]").forEach((a) => {
+                const next = new URLSearchParams(query);
+                if (a.dataset.v) next.set(a.dataset.q, a.dataset.v);
+                else next.delete(a.dataset.q);
+                a.href = `?${next}`;
+                if ((query.get(a.dataset.q) ?? "") === a.dataset.v) a.setAttribute("aria-current", "true");
+            });
+            document.getElementById("forget").addEventListener("click", () => {
+                localStorage.removeItem("pg-stories-seen");
+                location.reload();
+            });
+        </script>
+    </body>
+</html>

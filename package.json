@@ -1,0 +1,21 @@
+{
+    "name": "@plusguard/stories",
+    "version": "1.0.0",
+    "description": "Instagram-like stories, from markup: a row of avatars that open a full-screen viewer — progress bars, autoplay, tap to go on, hold to pause, a 3D cube between people, videos with sound. No dependencies, framework-agnostic.",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+        "./index.css": "./index.css"
+    },
+    "files": ["dist", "index.ts", "index.css", "README.md", "LICENSE"],
+    "sideEffects": ["*.css"],
+    "scripts": {
+        "build": "npx -p typescript tsc index.ts --outDir dist --declaration --target es2020 --module es2020 --lib dom,dom.iterable,es2020 --strict"
+    },
+    "license": "MIT",
+    "author": "PlusGuard",
+    "repository": { "type": "git", "url": "git+https://github.com/omisilli/stories.git" },
+    "keywords": ["stories", "instagram", "viewer", "cube", "autoplay", "vanilla"]
+}
