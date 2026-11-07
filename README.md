@@ -6,7 +6,7 @@ from one person to the next, videos with sound on a tap. Full screen on a
 phone, a card on a computer. No dependencies, framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v1.1.0
+npm install github:omisilli/stories#v1.1.1
 ```
 
 ```ts
@@ -36,9 +36,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.1/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.0/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.1/dist/index.js";
 
     initStories();
 </script>
