@@ -7,6 +7,7 @@
  *   --pg-stories-transition   from user to user: cube (default) · slide · fade
  *   --pg-stories-backdrop     behind the card
  *   --pg-stories-bar          a bar, filled · --pg-stories-bar-track, empty
+ *   --pg-stories-press-shade  how dark the side pressed gets. Default 0.25
  *
  * Below 40rem the card fills the screen. index.ts writes --pg-stories-half
  * (half the card's width, for the cube), --pg-stories-progress on each bar,
@@ -29,6 +30,7 @@
     --pg-stories-backdrop: rgb(18 18 20 / 0.97);
     --pg-stories-bar: #fff;
     --pg-stories-bar-track: rgb(255 255 255 / 0.35);
+    --pg-stories-press-shade: 0.25;
 }
 
 /* The page stays still while it is open. With Lenis: autoToggle: true. */
@@ -228,24 +230,30 @@ html:has([data-pg-stories-viewer]) {
     margin-left: auto;
 }
 
-/* Pressed: a shade on the side that will be gone to — the left 30% back,
-   the rest on. Only on the face in front. */
+/* Pressed: a shade over the part pressed — the right 70% goes on, the left
+   30% back — black at the card's edge, clear at the part's inner edge.
+   Stays till the press ends, dragged or not. */
 [data-pg-stories-side="current"] [data-pg-stories-slides]::after {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
     z-index: 1;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s;
+    transition: opacity 0.2s;
 }
 [data-pg-stories-press="next"] [data-pg-stories-side="current"] [data-pg-stories-slides]::after {
-    opacity: 1;
-    background: linear-gradient(to left, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 35%, transparent 70%);
+    left: 30%;
+    right: 0;
+    opacity: var(--pg-stories-press-shade);
+    background: linear-gradient(to left, #000, transparent);
 }
 [data-pg-stories-press="prev"] [data-pg-stories-side="current"] [data-pg-stories-slides]::after {
-    opacity: 1;
-    background: linear-gradient(to right, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 35%, transparent 70%);
+    left: 0;
+    right: 70%;
+    opacity: var(--pg-stories-press-shade);
+    background: linear-gradient(to right, #000, transparent);
 }
 
 /* The cube's shading: a face darkens as it turns away. */

@@ -6,7 +6,7 @@ from one person to the next, videos with sound on a tap. Full screen on a
 phone, a card on a computer. No dependencies, framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v1.2.0
+npm install github:omisilli/stories#v1.3.0
 ```
 
 ```ts
@@ -36,9 +36,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.2.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.2.0/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.3.0/dist/index.js";
 
     initStories();
 </script>
@@ -113,6 +113,7 @@ query:
 | `--pg-stories-backdrop`   | near black         | Behind the card                                 |
 | `--pg-stories-bar`        | white              | A bar, filled                                   |
 | `--pg-stories-bar-track`  | white, 35%         | A bar, empty                                    |
+| `--pg-stories-press-shade`| `0.25`             | How dark the side pressed gets, at its edge     |
 
 Below 40rem the card fills the screen. With reduced motion asked for, the
 transition is a fade.

@@ -412,8 +412,7 @@ function openViewer(users, start, opener) {
         if (!down.axis && Math.hypot(dx, dy) > 8) {
             down.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
             clearTimeout(holdTimer);
-            held = true; // nothing plays on while it is dragged
-            root.removeAttribute("data-pg-stories-press");
+            held = true; // nothing plays on while it is dragged — the press shade stays till release
         }
         if (down.axis === "x" && transition() !== "fade") {
             let offset = -dx / width();
