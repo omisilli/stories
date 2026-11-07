@@ -6,7 +6,7 @@ from one person to the next, videos with sound on a tap. Full screen on a
 phone, a card on a computer. No dependencies, framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v1.1.1
+npm install github:omisilli/stories#v1.2.0
 ```
 
 ```ts
@@ -36,9 +36,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.1/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v1.2.0/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.1.1/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v1.2.0/dist/index.js";
 
     initStories();
 </script>
@@ -52,8 +52,8 @@ the newest 1.x release.
 | Do                                   | Happens                                               |
 | ------------------------------------ | ----------------------------------------------------- |
 | Wait                                 | The bar fills; the next story, then the next person   |
-| Tap the right two-thirds · →         | The next story                                        |
-| Tap the left third · ←               | The story before — or the person before               |
+| Tap the right 70% · →                | The next story — a shade comes in from the right while pressed |
+| Tap the left 30% · ←                 | The story before — or the person before; the shade from the left |
 | Hold anywhere                        | Paused while held; the bars and the name step back    |
 | Drag sideways                        | The next or the person before, on a cube — it follows the finger, and goes on past a quarter, or with a flick; the face turning away darkens, the one coming in comes out of the dark |
 | Escape · × · the browser's Back      | Closed                                                |
@@ -74,6 +74,8 @@ the newest 1.x release.
 - **Seen.** A person whose last story was shown gets
   `data-pg-stories-seen="true"` on every `data-pg-stories-open` button for
   them — kept in this browser (localStorage), so the ring can go grey.
+- **The speaker** shows only on a video — on the faces beside too, as the
+  cube turns.
 - **Ready ahead.** The next video loads while the one before plays; the
   first story of the person on each side is there before the cube turns.
 

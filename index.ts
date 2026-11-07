@@ -22,8 +22,9 @@
  *   - A bar per story fills as it plays: an image or HTML for
  *     data-pg-stories-duration ms (on the item, or the group; default 5000),
  *     a video for its own length. It waits while a picture or video loads.
- *   - Tap the right two-thirds: the next story; the left third: the one
- *     before. Hold anywhere: paused, while held (the bars and header hide).
+ *   - Tap the right 70%: the next story; the left 30%: the one before — a
+ *     shade comes in on that side while pressed. Hold anywhere: paused,
+ *     while held (the bars and header hide).
  *   - Drag sideways: to the next or previous user, on a 3D cube —
  *     --pg-stories-transition: cube (default) · slide · fade, in CSS.
  *     With reduced motion, fade.
@@ -47,6 +48,8 @@ const SEEN = "data-pg-stories-seen";
 const DEFAULT_DURATION = 5000;
 const SEEN_KEY = "pg-stories-seen";
 const HOLD = 220;
+/* The left part of a story that goes back; the rest goes on. */
+const PREV_ZONE = 0.3;
 
 type Transition = "cube" | "slide" | "fade";
 
@@ -168,6 +171,9 @@ function buildFace(user: User, label: string): Face {
     });
     // Darkens the face as the cube turns it away.
     const shade = el("div", { "data-pg-stories-shade": "", "aria-hidden": "true" });
+    // The speaker only for a video: a face shown beside the current one (the
+    // cube's sides) shows its first story — no speaker unless that is one.
+    sound.hidden = !slides[0]?.querySelector("video");
     root.append(box, barsBox, head, shade);
     return { root, bars, slides, sound };
 }
@@ -336,7 +342,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
 
     // The cube at an offset — and its shading: the face turning away
     // darkens, the one coming in comes out of the dark.
-    const SHADE = 0.6;
+    const SHADE = 0.75;
     const place = (offset: number): void => {
         cube.style.transform = pose(offset);
         const cubeMode = transition() === "cube";
@@ -397,6 +403,9 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
         if (turning || e.button > 0) return;
         if ((e.target as Element).closest("button, a, input, textarea, select")) return;
         down = { x: e.clientX, y: e.clientY, t: performance.now(), axis: "", id: e.pointerId, touch: e.pointerType !== "mouse" };
+        // A shade on the side pressed: the left third goes back, the rest on.
+        const box = stage.getBoundingClientRect();
+        root.setAttribute("data-pg-stories-press", e.clientX - box.left < box.width * PREV_ZONE ? "prev" : "next");
         stage.setPointerCapture(e.pointerId);
         holdTimer = window.setTimeout(() => {
             held = true;
@@ -412,6 +421,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
             down.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
             clearTimeout(holdTimer);
             held = true; // nothing plays on while it is dragged
+            root.removeAttribute("data-pg-stories-press");
         }
         if (down.axis === "x" && transition() !== "fade") {
             let offset = -dx / width();
@@ -439,6 +449,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
         down = null;
         held = false;
         root.setAttribute("data-pg-stories-held", "false");
+        root.removeAttribute("data-pg-stories-press");
         last = 0;
 
         if (axis === "x") {
@@ -464,7 +475,7 @@ function openViewer(users: User[], start: number, opener: HTMLElement | null): v
         // A tap, not a hold: back on the left third, on otherwise.
         if (!wasHeld) {
             const box = stage.getBoundingClientRect();
-            if (e.clientX - box.left < box.width / 3) prev();
+            if (e.clientX - box.left < box.width * PREV_ZONE) prev();
             else next();
         }
     };

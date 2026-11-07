@@ -228,6 +228,26 @@ html:has([data-pg-stories-viewer]) {
     margin-left: auto;
 }
 
+/* Pressed: a shade on the side that will be gone to — the left 30% back,
+   the rest on. Only on the face in front. */
+[data-pg-stories-side="current"] [data-pg-stories-slides]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+[data-pg-stories-press="next"] [data-pg-stories-side="current"] [data-pg-stories-slides]::after {
+    opacity: 1;
+    background: linear-gradient(to left, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 35%, transparent 70%);
+}
+[data-pg-stories-press="prev"] [data-pg-stories-side="current"] [data-pg-stories-slides]::after {
+    opacity: 1;
+    background: linear-gradient(to right, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 35%, transparent 70%);
+}
+
 /* The cube's shading: a face darkens as it turns away. */
 [data-pg-stories-shade] {
     position: absolute;
