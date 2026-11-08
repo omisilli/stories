@@ -7,7 +7,7 @@ screen on a phone, a card on a computer. No dependencies,
 framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v3.0.1
+npm install github:omisilli/stories#v3.1.0
 ```
 
 ```ts
@@ -37,9 +37,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/dist/index.js";
 
     initStories();
 </script>
@@ -85,7 +85,7 @@ the newest 3.x release.
   closing it any other way takes that entry back.
 - **Seen.** A person whose last story was shown gets
   `data-pg-stories-seen="true"` on every `data-pg-stories-open` button for
-  them — kept in this browser (localStorage), so the ring can go grey.
+  them — kept in this browser (localStorage), so the ring can go grey. `forgetStoriesSeen()` clears it, at once.
 - **The speaker** shows only on a video — on the faces beside too, as the
   cube turns.
 - **Loaded when its turn comes.** Write the hidden stories' pictures
@@ -435,7 +435,8 @@ from copies of the stories; the page's own markup is never changed — React,
 or a CMS template, renders it as it likes. A video in a story is written
 `muted playsinline`; the viewer plays it and pauses it.
 
-`openStories("ada")` opens a person from code — `openStories("ada", 1)` at
+`forgetStoriesSeen()` forgets what was seen in this browser — every ring
+bright again at once, no reload. `openStories("ada")` opens a person from code — `openStories("ada", 1)` at
 their second story; `showStoriesNotice("Sent")` says a few words over the
 open story.
 
@@ -525,7 +526,7 @@ browser reads it:
 ```html
 <head>
     …
-    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/early.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/early.js"></script>
 </head>
 ```
 

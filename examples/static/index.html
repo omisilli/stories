@@ -10,10 +10,10 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>stories — example</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/index.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/index.css" />
         <!-- The seen marks before the page is drawn: a ring seen before never
              shows as new for a moment. A classic script, here in <head>. -->
-        <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/early.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/early.js"></script>
         <!-- The page's font, SF Pro Text, inline in this file. -->
         <link rel="stylesheet" href="./sf-pro.css" />
         <style>
@@ -1063,7 +1063,7 @@
         </div>
 
         <script type="module">
-            import { initStories, showStoriesNotice } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/dist/index.js";
+            import { initStories, showStoriesNotice, forgetStoriesSeen } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/dist/index.js";
 
             initStories();
 
@@ -1223,10 +1223,8 @@
                 if (e.key === "Escape" && !sheet.open) closeMenus();
             });
 
-            document.getElementById("forget").addEventListener("click", () => {
-                localStorage.removeItem("pg-stories-seen");
-                location.reload();
-            });
+            // Every ring bright again — at once, the page left where it is.
+            document.getElementById("forget").addEventListener("click", forgetStoriesSeen);
         </script>
     </body>
 </html>

@@ -95,6 +95,17 @@ function paintSeen(): void {
     });
 }
 
+/* Forget what was seen, in this browser: every ring bright again, at once —
+   no reload, the page left where it is. */
+export function forgetStoriesSeen(): void {
+    try {
+        localStorage.removeItem(SEEN_KEY);
+    } catch {
+        // Storage blocked: nothing kept, nothing to forget.
+    }
+    paintSeen();
+}
+
 /* ---------- Small helpers ---------- */
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}): HTMLElementTagNameMap[K] {

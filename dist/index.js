@@ -91,6 +91,17 @@ function paintSeen() {
             el.setAttribute(SEEN, value);
     });
 }
+/* Forget what was seen, in this browser: every ring bright again, at once —
+   no reload, the page left where it is. */
+export function forgetStoriesSeen() {
+    try {
+        localStorage.removeItem(SEEN_KEY);
+    }
+    catch {
+        // Storage blocked: nothing kept, nothing to forget.
+    }
+    paintSeen();
+}
 /* ---------- Small helpers ---------- */
 function el(tag, attrs = {}) {
     const node = document.createElement(tag);

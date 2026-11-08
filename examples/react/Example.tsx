@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { initStories, showStoriesNotice } from "@plusguard/stories";
+import { initStories, showStoriesNotice, forgetStoriesSeen } from "@plusguard/stories";
 import "@plusguard/stories/index.css";
 
 /* Mount once, high in the tree: one listener answers every avatar, those
@@ -27,6 +27,15 @@ export function Stories() {
     }, []);
 
     return null;
+}
+
+/* Every ring bright again, at once — no reload. */
+export function ForgetSeen() {
+    return (
+        <button type="button" onClick={forgetStoriesSeen}>
+            Forget what was seen
+        </button>
+    );
 }
 
 /* Anywhere else — a reply sent from your own footer, say. */
