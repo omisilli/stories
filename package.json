@@ -1,15 +1,16 @@
 {
     "name": "@plusguard/stories",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "description": "Instagram-like stories, from markup: a row of avatars that open a full-screen viewer — progress bars, autoplay, tap to go on, hold to pause, a 3D cube between people, videos with sound. No dependencies, framework-agnostic.",
     "type": "module",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-        "./index.css": "./index.css"
+        "./index.css": "./index.css",
+        "./early.js": "./early.js"
     },
-    "files": ["dist", "index.ts", "index.css", "README.md", "LICENSE"],
+    "files": ["dist", "index.ts", "index.css", "early.js", "README.md", "LICENSE"],
     "sideEffects": ["*.css"],
     "scripts": {
         "build": "npx -p typescript tsc index.ts --outDir dist --declaration --target es2020 --module es2020 --lib dom,dom.iterable,es2020 --strict"

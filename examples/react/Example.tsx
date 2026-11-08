@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { initStories } from "@plusguard/stories";
+import { initStories, showStoriesNotice } from "@plusguard/stories";
 import "@plusguard/stories/index.css";
 
 /* Mount once, high in the tree: one listener answers every avatar, those
@@ -9,7 +9,29 @@ import "@plusguard/stories/index.css";
    stays still while the viewer is open. */
 export function Stories() {
     useEffect(() => initStories(), []);
+
+    // What the viewer leaves to the site: a quick reaction — sent here, or
+    // a visitor not signed in sent to sign in — then "Sent" over the story.
+    useEffect(() => {
+        const onReaction = async (e: Event) => {
+            const { user, story, reaction, notice } = (e as CustomEvent).detail;
+            const res = await fetch("/api/stories/reactions", {
+                method: "POST",
+                body: JSON.stringify({ user, story, reaction }),
+            });
+            if (res.status === 401) return void (location.href = "/sign-in");
+            notice("Sent");
+        };
+        document.addEventListener("pg-stories-reaction", onReaction);
+        return () => document.removeEventListener("pg-stories-reaction", onReaction);
+    }, []);
+
     return null;
+}
+
+/* Anywhere else — a reply sent from your own footer, say. */
+export function sayReplySent() {
+    showStoriesNotice("Sent");
 }
 
 /*
@@ -42,11 +64,10 @@ const people: Person[] = [
 ];
 
 /*
- * The avatars: any button, anywhere, opens a person by id. Style the ring
- * on data-pg-stories-seen — "true" once that person was seen to the end:
- *
- *   .ring { background: conic-gradient(#feda75, #d62976, #4f5bd5, #feda75); }
- *   [data-pg-stories-seen="true"] .ring { background: #ddd; }
+ * The avatars: any button, anywhere, opens a person by id. The ring — a
+ * band of colour, a gap, the photo on a grey disc that holds its place —
+ * goes grey and thinner on data-pg-stories-seen="true". Its CSS is in the
+ * README ("The avatars") and the static example.
  */
 export function Avatars() {
     return (
@@ -54,7 +75,7 @@ export function Avatars() {
             {people.map((p) => (
                 <button key={p.id} type="button" data-pg-stories-open={p.id}>
                     <span className="ring">
-                        <img src={p.avatar} alt="" />
+                        <img src={p.avatar} width={160} height={160} alt="" />
                     </span>
                     {p.name}
                 </button>
@@ -94,12 +115,44 @@ export function StorySources() {
     );
 }
 
+/*
+ * A post: its avatar is one more button that opens the person's stories.
+ * Portrait, 4:5 — Instagram's tallest feed post (1080 × 1350); the grey
+ * behind the picture holds its place while it loads.
+ */
+export function Post({ person, image, caption }: { person: Person; image: string; caption: string }) {
+    return (
+        <article className="post">
+            <header>
+                <button type="button" data-pg-stories-open={person.id} aria-label={`${person.name}'s stories`}>
+                    <span className="ring">
+                        <img src={person.avatar} width={80} height={80} alt="" />
+                    </span>
+                </button>
+                <strong>{person.name}</strong>
+            </header>
+            <img
+                src={image}
+                width={1080}
+                height={1350}
+                alt=""
+                loading="lazy"
+                style={{ width: "100%", height: "auto", aspectRatio: "4 / 5", objectFit: "cover", background: "#efefef" }}
+            />
+            <p>
+                <strong>{person.name}</strong> {caption}
+            </p>
+        </article>
+    );
+}
+
 /* Together, on a page. */
 export function Example() {
     return (
         <>
             <Stories />
             <Avatars />
+            <Post person={people[0]} image="/posts/ada-1.jpg" caption="A lake at dawn — the stories have the rest." />
             <StorySources />
         </>
     );

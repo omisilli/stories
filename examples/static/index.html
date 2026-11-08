@@ -1,45 +1,64 @@
 <!doctype html>
-<!-- Open by double-clicking: the script loads from jsDelivr, the two videos
-     sit beside this file, the photos come from Lorem Picsum (Unsplash
+<!-- Open by double-clicking: the script loads from jsDelivr, the video and
+     the music sit beside this file, the photos come from Lorem Picsum (Unsplash
      photos, free to use). Pinned to this release, so the page and the code
-     always match. The switches reload the page with ?e and ?d. -->
+     always match. The switches reload the page with ?l, ?e and ?d. The font,
+     SF Pro Text, is written into sf-pro.css beside this file. The sizes are
+     a feed's own, measured: a 468px post, an 88px ring. -->
 <html lang="en">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>stories — example</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/index.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/index.css" />
+        <!-- The seen marks before the page is drawn: a ring seen before never
+             shows as new for a moment. A classic script, here in <head>. -->
+        <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/early.js"></script>
+        <!-- The page's font, SF Pro Text, inline in this file. -->
+        <link rel="stylesheet" href="./sf-pro.css" />
         <style>
+            /* Black, as a feed is at night. (Light comes later, with a
+               switch.) */
             :root {
-                --bg: #f6f6f4;
-                --surface: #ffffff;
-                --fg: #18181b;
-                --muted: #6b6b72;
-                --line: #e4e4e0;
-                color-scheme: light dark;
-            }
-            @media (prefers-color-scheme: dark) {
-                :root {
-                    --bg: #111113;
-                    --surface: #1b1b1f;
-                    --fg: #ededef;
-                    --muted: #9a9aa3;
-                    --line: #2c2c31;
-                }
+                --bg: #000000;
+                --surface: #262626;
+                --fg: #f5f5f5;
+                --muted: #a8a8a8;
+                --line: #262626;
+                --link: #708dff;
+                /* A ring seen to the end. */
+                --seen: #4f4f4f;
+                /* Where a picture will be, until it is there: nothing jumps. */
+                --placeholder: #262626;
+                color-scheme: dark;
             }
             * {
                 box-sizing: border-box;
                 margin: 0;
             }
             body {
+                /* SF Pro Text on every device (sf-pro.css); the system's
+                   own font until it is in. The viewer takes it too. */
                 font:
-                    16px/1.6 system-ui,
+                    14px/1.4 "SF Pro Text",
                     -apple-system,
+                    system-ui,
+                    "Helvetica Neue",
+                    Helvetica,
+                    Arial,
                     "Segoe UI",
                     Roboto,
                     sans-serif;
                 color: var(--fg);
                 background: var(--bg);
+            }
+            button {
+                font: inherit;
+                color: inherit;
+                padding: 0;
+                border: 0;
+                background: none;
+                cursor: pointer;
             }
             code {
                 font:
@@ -51,95 +70,685 @@
                 border-radius: 0.35em;
                 background: color-mix(in srgb, var(--fg) 8%, transparent);
             }
-            main {
-                max-width: 46rem;
+            .icon {
+                display: block;
+                width: 1.5rem;
+                height: 1.5rem;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.8;
+                stroke-linejoin: round;
+                stroke-linecap: round;
+            }
+            .icon.solid {
+                fill: currentColor;
+                stroke: none;
+            }
+            .wordmark {
+                font-weight: 700;
+                font-size: 1.5rem;
+                letter-spacing: -0.02em;
+            }
+
+            /*
+             * The page, as a social feed is laid out — only the look; nothing
+             * here but the stories works. Phone first: a bar on top, the feed,
+             * a bar of icons at the bottom. From md (48rem) a rail of icons on
+             * the left; from lg (64rem) a column on the right.
+             */
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 5;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                height: 3.25rem;
+                padding: 0 1rem;
+                background: var(--bg);
+                border-bottom: 1px solid var(--line);
+            }
+            .rail {
+                position: fixed;
+                inset: auto 0 0;
+                z-index: 5;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                height: 3rem;
+                background: var(--bg);
+                border-top: 1px solid var(--line);
+            }
+            .rail > * {
+                display: grid;
+                place-items: center;
+                width: 3rem;
+                height: 3rem;
+                border-radius: 0.6rem;
+            }
+            .rail .wide {
+                display: none;
+            }
+            .rail .me img {
+                width: 1.5rem;
+                height: 1.5rem;
+                border-radius: 50%;
+                background: var(--placeholder);
+            }
+            .page {
+                padding-bottom: 4rem;
+            }
+            .feed {
+                max-width: 39.375rem;
                 margin: 0 auto;
-                padding: 3rem 1.25rem 6rem;
+            }
+            .tabs {
+                display: none;
+            }
+            .side {
                 display: grid;
                 gap: 1.5rem;
+                max-width: 40rem;
+                margin: 0 auto;
+                padding: 2rem 1rem;
             }
-            h1 {
-                font-size: 1.6rem;
+            .messages {
+                display: none;
             }
-            h2 {
-                font-size: 1.1rem;
+            @media (width >= 48rem) {
+                .topbar {
+                    display: none;
+                }
+                .rail {
+                    inset: 0 auto 0 0;
+                    width: 4.5rem;
+                    height: auto;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    gap: 0.5rem;
+                    padding: 1.75rem 0 1.25rem;
+                    border-top: 0;
+                }
+                .rail .wide {
+                    display: grid;
+                }
+                .rail .logo {
+                    margin-bottom: 3.5rem;
+                }
+                .rail .push {
+                    margin-top: auto;
+                }
+                .rail > :hover {
+                    background: color-mix(in srgb, var(--fg) 6%, transparent);
+                }
+                .page {
+                    padding: 1.75rem 0 4rem 4.5rem;
+                }
+                .tabs {
+                    display: flex;
+                    gap: 1rem;
+                    padding: 0 0 0.75rem;
+                    margin-bottom: 1.25rem;
+                    border-bottom: 1px solid var(--line);
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+                .tabs span + span {
+                    color: var(--muted);
+                }
             }
-            p {
+            @media (width >= 64rem) {
+                .page {
+                    display: grid;
+                    grid-template-columns: minmax(0, 39.375rem) 18rem;
+                    justify-content: center;
+                    align-items: start;
+                    gap: 4rem;
+                }
+                .feed {
+                    margin: 0;
+                }
+                .side {
+                    /* Room below for the Messages bar, fixed over the corner. */
+                    padding: 0 0 6rem;
+                }
+                .messages {
+                    position: fixed;
+                    right: 1.5rem;
+                    bottom: 1.5rem;
+                    z-index: 5;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.8rem 1rem 0.8rem 1.1rem;
+                    border-radius: 999px;
+                    background: var(--surface);
+                    box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+                    font-weight: 700;
+                    font-size: 1.05rem;
+                }
+                .messages img {
+                    width: 1.75rem;
+                    height: 1.75rem;
+                    margin-left: 1.5rem;
+                    border-radius: 50%;
+                    background: var(--placeholder);
+                }
+            }
+
+            /* The ring: a band of colour while there is something new, a
+               grey one once seen — then a gap, then the photo. The band is
+               drawn around the box and cut out in its middle, so the gap
+               is clear: the page shows through, or the picture under a
+               post's header. Behind the photo a grey disc: the place is
+               there before the picture is. */
+            .ring {
+                /* 88px: a 3px band, a 4px gap, a 74px photo — as measured. */
+                --ring: 3px;
+                --gap: 4px;
+                position: relative;
+                display: block;
+                width: 5.5rem;
+                aspect-ratio: 1;
+                padding: calc(var(--ring) + var(--gap));
+                border-radius: 50%;
+            }
+            .ring::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                padding: var(--ring);
+                border-radius: 50%;
+                /* Yellow at the bottom left to purple at the top right —
+                   the colours measured off a feed's ring. */
+                background: linear-gradient(45deg, #f9c20c 15%, #f4a012 25%, #f95e1a 41%, #f30863 59%, #df03a8 75%, #cc02c1 85%);
+                mask:
+                    linear-gradient(#000 0 0) content-box,
+                    linear-gradient(#000 0 0);
+                mask-composite: exclude;
+            }
+            .ring img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                background: var(--placeholder);
+                object-fit: cover;
+            }
+            /* Seen: the same band, grey. */
+            [data-pg-stories-seen="true"] .ring::before {
+                background: var(--seen);
+            }
+
+            /* The row of avatars: it scrolls sideways. */
+            .avatars {
+                display: flex;
+                gap: 0.75rem;
+                overflow-x: auto;
+                scrollbar-width: none;
+                padding: 0.75rem 1rem;
+            }
+            .avatars button {
+                flex: none;
+                display: grid;
+                justify-items: center;
+                gap: 0.25rem;
+                width: 4.125rem;
+                font-size: 0.75rem;
+            }
+            .avatars .ring {
+                --ring: 2px;
+                --gap: 3px;
+                width: 4.125rem;
+            }
+            .avatars .name {
+                max-width: 4.75rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            @media (width >= 48rem) {
+                .avatars {
+                    gap: 1rem;
+                    padding: 0 0 1.5rem;
+                }
+                .avatars .ring {
+                    --ring: 3px;
+                    --gap: 4px;
+                    width: 5.5rem;
+                }
+                .avatars button {
+                    width: 5.5rem;
+                }
+            }
+
+            /* --- Posts. A post's avatar opens its person's stories: any
+               button, anywhere. The header sits on the picture, on a shade
+               at its top — as a feed shows a post now. --- */
+            .post {
+                display: grid;
+                max-width: 29.25rem;
+                margin: 0 auto 1.25rem;
+                padding-bottom: 1.25rem;
+                border-bottom: 1px solid var(--line);
+            }
+            .post .media {
+                position: relative;
+                overflow: hidden;
+                background: var(--placeholder);
+            }
+            /* Portrait, 4:5 — the tallest feed post (1080 × 1350). */
+            .post .media > img {
+                display: block;
+                width: 100%;
+                height: auto;
+                aspect-ratio: 4 / 5;
+                object-fit: cover;
+            }
+            .post .media::before {
+                content: "";
+                position: absolute;
+                inset: 0 0 auto;
+                height: 6rem;
+                background: linear-gradient(rgb(0 0 0 / 0.45), transparent);
+                pointer-events: none;
+            }
+            .post header {
+                position: absolute;
+                inset: 0 0 auto;
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                padding: 0.375rem 0.875rem 0 0.6875rem;
+                color: #fff;
+                text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+            }
+            /* 40px: a 2px band, a 2px gap, a 32px photo — as measured. */
+            .post header .ring {
+                --ring: 2px;
+                --gap: 2px;
+                width: 2.5rem;
+                flex: none;
+            }
+            .post header .who {
+                display: grid;
+                line-height: 1.2;
+            }
+            .post header strong {
+                font-weight: 600;
+            }
+            .post header small {
+                font-size: 0.75rem;
+            }
+            .post header .more {
+                margin-left: auto;
+            }
+            .post .actions {
+                display: flex;
+                gap: 1rem;
+                padding: 0.7rem 0.75rem 0.4rem;
+            }
+            .post .actions :last-child {
+                margin-left: auto;
+            }
+            .post .text {
+                display: grid;
+                gap: 0.25rem;
+                padding: 0 0.75rem;
+            }
+            .post .text .muted {
                 color: var(--muted);
+            }
+            @media (width >= 48rem) {
+                .post .actions,
+                .post .text {
+                    padding-inline: 0;
+                }
+                .post .media {
+                    border-radius: 0.3125rem;
+                    outline: 1px solid var(--line);
+                }
+            }
+
+            /* --- The column on the right: who is here, suggestions, the
+               switches of this example. --- */
+            .person {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .person img {
+                width: 2.75rem;
+                height: 2.75rem;
+                flex: none;
+                border-radius: 50%;
+                object-fit: cover;
+                background: var(--placeholder);
+            }
+            .person .ring {
+                width: 2.75rem;
+                --ring: 2px;
+                --gap: 2px;
+            }
+            .person .ring img {
+                width: 100%;
+                height: 100%;
+            }
+            .person div {
+                display: grid;
+                min-width: 0;
+                line-height: 1.3;
+            }
+            .person strong {
+                font-weight: 600;
+            }
+            .person small {
+                color: var(--muted);
+                font-size: 0.75rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .person .act {
+                margin-left: auto;
+                color: var(--link);
+                font-weight: 600;
+                font-size: 0.75rem;
+            }
+            .side h2 {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.875rem;
+                font-weight: 600;
+            }
+            .side h2 span {
+                font-size: 0.75rem;
+            }
+            .suggested {
+                display: grid;
+                gap: 1rem;
+            }
+            .try {
+                display: grid;
+                gap: 0.9rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--line);
+            }
+            .try p {
+                color: var(--muted);
+                font-size: 0.9rem;
             }
             .switches {
                 display: grid;
                 gap: 0.6rem;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
             .switches > div {
                 display: flex;
                 flex-wrap: wrap;
                 align-items: center;
-                gap: 0.4rem;
+                gap: 0.35rem;
             }
             .switches span {
-                min-width: 10rem;
+                width: 100%;
                 color: var(--muted);
             }
             .switches a,
             .switches button {
-                font: inherit;
                 color: inherit;
                 text-decoration: none;
-                padding: 0.3rem 0.7rem;
+                padding: 0.25rem 0.6rem;
                 border: 1px solid var(--line);
                 border-radius: 0.5rem;
                 background: var(--surface);
-                cursor: pointer;
             }
             .switches a[aria-current="true"] {
                 background: var(--fg);
                 color: var(--bg);
                 border-color: var(--fg);
             }
-
-            /* The row of avatars: it scrolls sideways, edge to edge. */
-            .avatars {
-                display: flex;
-                gap: 1rem;
-                overflow-x: auto;
-                scrollbar-width: none;
-                margin-inline: -1.25rem;
-                padding: 0.25rem 1.25rem 0.5rem;
+            .side footer {
+                color: var(--muted);
+                font-size: 0.75rem;
+                line-height: 1.7;
             }
-            .avatars button {
-                flex: none;
-                display: grid;
-                justify-items: center;
-                gap: 0.35rem;
-                width: 5rem;
+
+            /* The footer under each card — the example's look; the package
+               only places it. */
+            .reply {
+                display: flex;
+                align-items: flex-end;
+                gap: 0.9rem;
+                color: #fff;
+            }
+            /* The box: a pill on one line; as the words grow it grows, up to
+               five lines, then scrolls inside. Pressed into, the heart and
+               the plane give way to "Send". */
+            /* The room around the words is the box's, not the textarea's:
+               scrolled, the words stay clear of the line. */
+            .reply-box {
+                flex: 1;
+                display: flex;
+                align-items: flex-end;
+                min-width: 0;
+                padding: 0.6rem 0 0.6rem 1.1rem;
+                border: 1px solid rgb(255 255 255 / 0.75);
+                /* A pill on one line (the browser halves a radius taller
+                   than the box); rounder as it grows, up to 2.5rem — so
+                   the words, kept 1.1rem in, never touch the curve. */
+                border-radius: 2.5rem;
+            }
+            .reply textarea {
+                flex: 1;
+                min-width: 0;
+                max-height: calc(1.3em * 5);
                 padding: 0;
                 border: 0;
+                outline: none;
+                resize: none;
+                overflow-y: auto;
+                scrollbar-width: thin;
                 font: inherit;
-                font-size: 0.8rem;
-                color: inherit;
-                background: none;
-                cursor: pointer;
+                line-height: 1.3;
+                color: #fff;
+                background: transparent;
             }
-            /* A ring: bright while there is something new, grey once seen. */
-            .avatars .ring {
+            .reply textarea::placeholder {
+                color: rgb(255 255 255 / 0.85);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .reply-send {
+                display: none;
+                flex: none;
+                align-self: center;
+                padding: 0 1rem;
+                font-weight: 600;
+            }
+            .reply-icon {
+                flex: none;
                 display: grid;
                 place-items: center;
-                width: 4.5rem;
-                height: 4.5rem;
-                border-radius: 50%;
-                background: conic-gradient(from 200deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75);
+                height: 2.6rem;
             }
-            .avatars button[data-pg-stories-seen="true"] .ring {
-                background: var(--line);
+            /* "Send" while the box is pressed into, and while there are words
+               in it — the box's own focus, not the heart's or the plane's. */
+            .reply:has(textarea:focus) .reply-send,
+            .reply:has(textarea:not(:placeholder-shown)) .reply-send {
+                display: block;
             }
-            .avatars img {
-                width: calc(100% - 6px);
-                height: calc(100% - 6px);
+            .reply:has(textarea:focus) .reply-icon {
+                display: none;
+            }
+
+            /* --- The "⋯" and what it opens: the site's own. --- */
+            .more-button {
+                display: grid;
+                place-items: center;
+                width: 2.5rem;
+                height: 2.5rem;
+                color: #fff;
+            }
+            .more-menu {
+                position: absolute;
+                top: calc(100% + 0.25rem);
+                right: 0;
+                z-index: 5;
+                display: grid;
+                min-width: 15rem;
+                padding: 0.5rem 0;
+                border-radius: 0.75rem;
+                color: #000;
+                background: #fff;
+                box-shadow: 0 4px 24px rgb(0 0 0 / 0.25);
+                text-shadow: none;
+            }
+            .more-menu[hidden] {
+                display: none;
+            }
+            .more-menu button {
+                padding: 0.9rem 1.25rem;
+                font-size: 0.95rem;
+                font-weight: 400;
+                text-align: left;
+            }
+            .more-menu button:hover {
+                background: #f5f5f5;
+            }
+            .danger {
+                color: #ed4956 !important;
+            }
+            /* A window over everything — the viewer too: <dialog>, opened
+               with showModal(), sits in the browser's top layer. */
+            .sheet {
+                margin: auto; /* the page's margin reset would pin it top left */
+                width: min(30rem, calc(100vw - 2rem));
+                max-height: calc(100dvh - 4rem);
+                padding: 0;
+                border: 0;
+                border-radius: 1rem;
+                color: #000;
+                background: #fff;
+                font-size: 0.95rem;
+            }
+            .sheet::backdrop {
+                background: rgb(0 0 0 / 0.65);
+            }
+            .sheet header {
+                display: grid;
+                grid-template-columns: 2.5rem 1fr 2.5rem;
+                align-items: center;
+                padding: 0.6rem 0.75rem;
+                border-bottom: 1px solid #dbdbdb;
+                font-weight: 700;
+                text-align: center;
+            }
+            .sheet header button {
+                display: grid;
+                place-items: center;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            .sheet h3 {
+                padding: 1rem 1.25rem 0.5rem;
+                font-size: 1rem;
+            }
+            .sheet ul {
+                margin: 0;
+                padding: 0 0 0.5rem;
+                list-style: none;
+            }
+            .sheet li button {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                width: 100%;
+                padding: 0.95rem 1.25rem;
+                border-top: 1px solid #efefef;
+                text-align: left;
+            }
+            .sheet li button::after {
+                content: "›";
+                color: #a8a8a8;
+                font-size: 1.4rem;
+                line-height: 1;
+            }
+            .about {
+                display: grid;
+                justify-items: center;
+                gap: 0.6rem;
+                padding: 1.25rem 1.25rem 0.5rem;
+                text-align: center;
+            }
+            .about img {
+                width: 5.5rem;
+                height: 5.5rem;
                 border-radius: 50%;
-                border: 3px solid var(--bg);
                 object-fit: cover;
+                background: #efefef;
+            }
+            .about p {
+                color: #737373;
+                font-size: 0.85rem;
+            }
+            .about dl {
+                display: grid;
+                gap: 0.9rem;
+                width: 100%;
+                margin: 0.75rem 0 0;
+                text-align: left;
+            }
+            .about dt {
+                font-weight: 600;
+            }
+            .about dd {
+                margin: 0;
+                color: #737373;
+            }
+            .sheet footer button {
+                width: 100%;
+                padding: 0.9rem;
+                border-top: 1px solid #dbdbdb;
+            }
+            /* A phone: the menu as wide as the card. */
+            @media (width < 40rem) {
+                .more {
+                    position: static !important;
+                }
+                .more-menu {
+                    left: 0.75rem;
+                    right: 0.75rem;
+                    top: 4rem;
+                }
+            }
+
+            /* A story with words on it — a sticker over the picture. */
+            .sticker-story {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+            .sticker-story img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .sticker {
+                position: absolute;
+                left: 6%;
+                right: 6%;
+                bottom: 16%;
+                padding: 0.6em 0.8em;
+                border-radius: 0.6em;
+                color: #000;
+                background: rgb(255 255 255 / 0.92);
+                font-size: clamp(1.1rem, 6cqw, 2rem);
+                font-weight: 700;
+                text-align: center;
+                line-height: 1.2;
             }
 
             /* An HTML story: anything at all. */
@@ -178,74 +787,251 @@
         </style>
     </head>
     <body>
-        <main>
-            <h1>stories</h1>
-            <p>
-                Press an avatar. Tap the right of a story for the next one, the left for the one before; hold to
-                pause; drag sideways to the next person, on a cube; after the last person
-                it closes — or, with the switch, after each one, or never by itself; Escape, × or the browser's Back to close — on a
-                phone, pull down too. A click beside the card does nothing. A person seen to the end goes grey — kept
-                in this browser.
-            </p>
+        <!-- A social feed's page — only the look: nothing here works but the
+             stories. Phone: a bar on top, a bar of icons below. From 48rem a
+             rail on the left; from 64rem a column on the right. -->
+        <header class="topbar">
+            <span class="wordmark">stories</span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg>
+        </header>
 
-            <div class="switches">
-                <div>
-                    <span>After a person</span>
-                    <a data-q="e" data-v="">next, then close</a>
-                    <a data-q="e" data-v="close">close</a>
-                    <a data-q="e" data-v="stay">next, then stay</a>
+        <nav class="rail" aria-label="Menu">
+            <span class="logo wide"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4.5"/></svg></span>
+            <span><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V21h-6.5v-6h-5v6H3z"/></svg></span>
+            <span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><path d="M10 8.8v6.4l5.2-3.2z"/></svg></span>
+            <span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg></span>
+            <span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5.5 5.5"/></svg></span>
+            <span class="wide"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg></span>
+            <span class="wide"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></span>
+            <span class="me"><img src="https://picsum.photos/id/1036/64/64" width="64" height="64" alt="" /></span>
+            <span class="wide push"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6h17M3.5 12h17M3.5 18h17"/></svg></span>
+            <span class="wide"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span>
+        </nav>
+
+        <div class="page">
+            <main class="feed">
+                <div class="tabs"><span>For you</span><span>Following</span></div>
+
+                <!-- The avatars: any button, anywhere, opens a person by id. -->
+                <div class="avatars">
+                    <button type="button" data-pg-stories-open="ada">
+                        <span class="ring"><img src="https://picsum.photos/id/1011/160/160" width="160" height="160" alt="" /></span><span class="name">ada</span>
+                    </button>
+                    <button type="button" data-pg-stories-open="mert">
+                        <span class="ring"><img src="https://picsum.photos/id/1025/160/160" width="160" height="160" alt="" /></span><span class="name">mert</span>
+                    </button>
+                    <button type="button" data-pg-stories-open="deniz">
+                        <span class="ring"><img src="https://picsum.photos/id/1015/160/160" width="160" height="160" alt="" /></span><span class="name">deniz</span>
+                    </button>
+                    <button type="button" data-pg-stories-open="plusguard">
+                        <span class="ring"><img src="https://picsum.photos/id/1036/160/160" width="160" height="160" alt="" /></span><span class="name">plusguard</span>
+                    </button>
+                    <button type="button" data-pg-stories-open="selin">
+                        <span class="ring"><img src="https://picsum.photos/id/1069/160/160" width="160" height="160" alt="" /></span><span class="name">selin</span>
+                    </button>
                 </div>
-                <div>
-                    <span>A picture stays</span>
-                    <a data-q="d" data-v="">5 s</a>
-                    <a data-q="d" data-v="3000">3 s</a>
-                    <a data-q="d" data-v="8000">8 s</a>
+
+                <!-- Posts: the avatar on a post opens that person's stories too. -->
+                <article class="post">
+                    <div class="media">
+                        <img src="https://picsum.photos/id/1050/1080/1350" width="1080" height="1350" alt="" loading="lazy" />
+                        <header>
+                            <button type="button" data-pg-stories-open="ada" aria-label="ada's stories">
+                                <span class="ring"><img src="https://picsum.photos/id/1011/80/80" width="80" height="80" alt="" /></span>
+                            </button>
+                            <span class="who"><span><strong>ada</strong> • 2h</span><small>Original audio</small></span>
+                            <span class="more"><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+                        </header>
+                    </div>
+                    <div class="actions"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 16.6A9.3 9.3 0 1 0 17 20.3l4.2 1.2z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21.5l-7-6.3-7 6.3V3h14z"/></svg></div>
+                    <div class="text">
+                        <strong>128 likes</strong>
+                        <p><strong>ada</strong> A lake at dawn — the stories have the rest.</p>
+                        <span class="muted">View all 12 comments</span>
+                        <span class="muted">Add a comment…</span>
+                    </div>
+                </article>
+                <article class="post">
+                    <div class="media">
+                        <img src="https://picsum.photos/id/1062/1080/1350" width="1080" height="1350" alt="" loading="lazy" />
+                        <header>
+                            <button type="button" data-pg-stories-open="deniz" aria-label="deniz's stories">
+                                <span class="ring"><img src="https://picsum.photos/id/1015/80/80" width="80" height="80" alt="" /></span>
+                            </button>
+                            <span class="who"><span><strong>deniz</strong> • 5h</span><small>Original audio</small></span>
+                            <span class="more"><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+                        </header>
+                    </div>
+                    <div class="actions"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 16.6A9.3 9.3 0 1 0 17 20.3l4.2 1.2z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21.5l-7-6.3-7 6.3V3h14z"/></svg></div>
+                    <div class="text">
+                        <strong>86 likes</strong>
+                        <p><strong>deniz</strong> Two of us, one walk.</p>
+                        <span class="muted">View all 4 comments</span>
+                        <span class="muted">Add a comment…</span>
+                    </div>
+                </article>
+                <article class="post">
+                    <div class="media">
+                        <img src="https://picsum.photos/id/1074/1080/1350" width="1080" height="1350" alt="" loading="lazy" />
+                        <header>
+                            <button type="button" data-pg-stories-open="selin" aria-label="selin's stories">
+                                <span class="ring"><img src="https://picsum.photos/id/1069/80/80" width="80" height="80" alt="" /></span>
+                            </button>
+                            <span class="who"><span><strong>selin</strong> • 1d</span><small>Original audio</small></span>
+                            <span class="more"><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+                        </header>
+                    </div>
+                    <div class="actions"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 16.6A9.3 9.3 0 1 0 17 20.3l4.2 1.2z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21.5l-7-6.3-7 6.3V3h14z"/></svg></div>
+                    <div class="text">
+                        <strong>214 likes</strong>
+                        <p><strong>selin</strong> Morning light, and nothing else.</p>
+                        <span class="muted">View all 23 comments</span>
+                        <span class="muted">Add a comment…</span>
+                    </div>
+                </article>
+            </main>
+
+            <aside class="side">
+                <div class="person">
+                    <button type="button" data-pg-stories-open="plusguard" aria-label="plusguard's stories">
+                        <span class="ring"><img src="https://picsum.photos/id/1036/88/88" width="88" height="88" alt="" /></span>
+                    </button>
+                    <div><strong>plusguard</strong><small>PlusGuard</small></div>
+                    <span class="act">Switch</span>
                 </div>
-                <div>
-                    <span>Seen</span>
-                    <button type="button" id="forget">Forget what was seen</button>
+
+                <h2>Suggested for you <span>See all</span></h2>
+                <div class="suggested">
+                    <div class="person">
+                        <img src="https://picsum.photos/id/1005/88/88" width="88" height="88" alt="" />
+                        <div><strong>kerem</strong><small>Followed by ada</small></div>
+                        <span class="act">Follow</span>
+                    </div>
+                    <div class="person">
+                        <img src="https://picsum.photos/id/1043/88/88" width="88" height="88" alt="" />
+                        <div><strong>atlas.studio</strong><small>Suggested for you</small></div>
+                        <span class="act">Follow</span>
+                    </div>
+                    <div class="person">
+                        <img src="https://picsum.photos/id/1027/88/88" width="88" height="88" alt="" />
+                        <div><strong>lale</strong><small>Followed by selin</small></div>
+                        <span class="act">Follow</span>
+                    </div>
+                    <div class="person">
+                        <img src="https://picsum.photos/id/1060/88/88" width="88" height="88" alt="" />
+                        <div><strong>mavi.cafe</strong><small>Suggested for you</small></div>
+                        <span class="act">Follow</span>
+                    </div>
+                    <div class="person">
+                        <img src="https://picsum.photos/id/1012/88/88" width="88" height="88" alt="" />
+                        <div><strong>yusuf</strong><small>Followed by deniz</small></div>
+                        <span class="act">Follow</span>
+                    </div>
+                </div>
+
+                <section class="try">
+                    <h2>Try it</h2>
+                <p>
+                    Press an avatar. Tap the right of a story for the next one, the left for the one before; hold to
+                    pause; drag sideways to the next person, on a cube; after the last person
+                    it closes — or, with the switch, after each one, or never by itself; Escape, × or the browser's Back to close — on a
+                    phone, pull down too. A click beside the card does nothing. A person seen to the end goes grey — kept
+                    in this browser.
+                </p>
+                <div class="switches">
+                    <div>
+                        <span>The viewer</span>
+                        <a data-q="l" data-v="">by screen — cube below 64rem</a>
+                        <a data-q="l" data-v="carousel">carousel</a>
+                        <a data-q="l" data-v="cube">cube</a>
+                    </div>
+                    <div>
+                        <span>After a person</span>
+                        <a data-q="e" data-v="">next, then close</a>
+                        <a data-q="e" data-v="close">close</a>
+                        <a data-q="e" data-v="stay">next, then stay</a>
+                    </div>
+                    <div>
+                        <span>A picture stays</span>
+                        <a data-q="d" data-v="">5 s</a>
+                        <a data-q="d" data-v="3000">3 s</a>
+                        <a data-q="d" data-v="8000">8 s</a>
+                    </div>
+                    <div>
+                        <span>Seen</span>
+                        <button type="button" id="forget">Forget what was seen</button>
+                    </div>
+                </div>
+                <h2>The stories</h2>
+                <p>
+                    Written once, hidden: <code>data-pg-stories</code> holds a <code>data-pg-stories-user</code> for each
+                    person, and each of theirs is a <code>data-pg-stories-item</code> — a picture, a video, or any HTML.
+                    The viewer is built from copies; this markup is never touched.
+                </p>
+                </section>
+
+                <footer>About · Help · Press · API · Jobs · Privacy · Terms<br />© 2026 stories — PlusGuard</footer>
+            </aside>
+        </div>
+
+        <div class="messages"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg> Messages <img src="https://picsum.photos/id/1025/56/56" width="56" height="56" alt="" /></div>
+
+        <!-- The stories, written once and hidden. Their pictures are
+             loading="lazy" and their videos preload="none": hidden, they
+             load nothing; the viewer loads each when its turn comes.
+             data-pg-stories-reactions: the quick reactions, shown while the
+             reply box is pressed into and empty. Leave it out for none. -->
+        <div data-pg-stories hidden data-pg-stories-reactions="😂 😮 😍 😢 👏 🔥 🎉 💯">
+            <!-- The logo in the viewer's corner, on a wide screen. -->
+            <span data-pg-stories-logo class="wordmark">stories</span>
+            <!-- The "⋯" in the header: the site's own button and menu, copied
+                 into every card. While its button is aria-expanded="true",
+                 the story holds. What the items open is the site's — here
+                 two windows (<dialog>), below in the script. -->
+            <div data-pg-stories-more class="more">
+                <button type="button" class="more-button" aria-label="More" aria-haspopup="menu" aria-expanded="false">
+                    <svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="18.5" cy="12" r="2.3"/></svg>
+                </button>
+                <div class="more-menu" role="menu" hidden>
+                    <button type="button" role="menuitem" class="danger" data-open="report">Report</button>
+                    <button type="button" role="menuitem" data-open="about">About this account</button>
                 </div>
             </div>
-
-            <!-- The avatars: any button, anywhere, opens a person by id. -->
-            <div class="avatars">
-                <button type="button" data-pg-stories-open="ada">
-                    <span class="ring"><img src="https://picsum.photos/id/1011/160/160" alt="" /></span>ada
-                </button>
-                <button type="button" data-pg-stories-open="mert">
-                    <span class="ring"><img src="https://picsum.photos/id/1025/160/160" alt="" /></span>mert
-                </button>
-                <button type="button" data-pg-stories-open="deniz">
-                    <span class="ring"><img src="https://picsum.photos/id/1015/160/160" alt="" /></span>deniz
-                </button>
-                <button type="button" data-pg-stories-open="plusguard">
-                    <span class="ring"><img src="https://picsum.photos/id/1036/160/160" alt="" /></span>plusguard
-                </button>
-                <button type="button" data-pg-stories-open="selin">
-                    <span class="ring"><img src="https://picsum.photos/id/1069/160/160" alt="" /></span>selin
-                </button>
+            <!-- Under every card: the site's own — here only its look. {name}
+                 becomes the person's name; data-pg-stories-for on the card
+                 says whose it is, for the site's own script. -->
+            <form data-pg-stories-footer class="reply">
+                <div class="reply-box">
+                    <textarea rows="1" placeholder="Reply to {name}…" aria-label="Reply to {name}"></textarea>
+                    <button type="submit" class="reply-send">Send</button>
+                </div>
+                <button type="button" class="reply-icon" aria-label="Like" data-pg-stories-like aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg></button>
+                <button type="button" class="reply-icon" aria-label="Share" data-pg-stories-share><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2.5 10.6 13.4M21.5 2.5 15 21l-4.4-7.6L3 9z"/></svg></button>
+            </form>
+            <div data-pg-stories-user="ada" data-joined="March 2018" data-place="Türkiye" data-pg-stories-name="ada" data-pg-stories-avatar="https://picsum.photos/id/1011/160/160">
+                <div data-pg-stories-item data-pg-stories-time="2h" data-pg-stories-music="Chopin · Étude in A-flat major" data-pg-stories-music-src="./media/chopin-etude.m4a" data-pg-stories-duration="15000"><img loading="lazy" src="https://picsum.photos/id/1011/720/1280" alt="A canoe on a lake" /></div>
+                <div data-pg-stories-item data-pg-stories-time="2h"><img loading="lazy" src="https://picsum.photos/id/1016/720/1280" alt="Canyon walls" /></div>
+                <div data-pg-stories-item data-pg-stories-time="1h"><img loading="lazy" src="https://picsum.photos/id/1018/720/1280" alt="Mountains in the mist" /></div>
             </div>
-
-            <h2>The stories</h2>
-            <p>
-                Written once, hidden: <code>data-pg-stories</code> holds a <code>data-pg-stories-user</code> for each
-                person, and each of theirs is a <code>data-pg-stories-item</code> — a picture, a video, or any HTML.
-                The viewer is built from copies; this markup is never touched.
-            </p>
-        </main>
-
-        <div data-pg-stories hidden>
-            <div data-pg-stories-user="ada" data-pg-stories-name="ada" data-pg-stories-avatar="https://picsum.photos/id/1011/160/160">
-                <div data-pg-stories-item data-pg-stories-time="2h"><img src="https://picsum.photos/id/1011/720/1280" alt="A canoe on a lake" /></div>
-                <div data-pg-stories-item data-pg-stories-time="2h"><img src="https://picsum.photos/id/1016/720/1280" alt="Canyon walls" /></div>
-                <div data-pg-stories-item data-pg-stories-time="1h"><img src="https://picsum.photos/id/1018/720/1280" alt="Mountains in the mist" /></div>
+            <div data-pg-stories-user="mert" data-joined="August 2019" data-place="Türkiye" data-pg-stories-name="mert" data-pg-stories-avatar="https://picsum.photos/id/1025/160/160">
+                <div data-pg-stories-item data-pg-stories-time="6h" data-pg-stories-music="Original audio"><img loading="lazy" src="https://picsum.photos/id/237/720/1280" alt="A black puppy" /></div>
+                <!-- Words in another language, and their translation: "See
+                     translation" under the name opens both. A CMS would write
+                     the translation where the site's language differs. -->
+                <div
+                    data-pg-stories-item
+                    data-pg-stories-time="5h"
+                    data-pg-stories-original="Bugün battaniyeden çıkmıyorum ❤️"
+                    data-pg-stories-translation="Not leaving the blanket today ❤️"
+                >
+                    <div class="sticker-story">
+                        <img loading="lazy" src="https://picsum.photos/id/1025/720/1280" alt="A dog in a blanket" />
+                        <p class="sticker">Bugün battaniyeden çıkmıyorum ❤️</p>
+                    </div>
+                </div>
             </div>
-            <div data-pg-stories-user="mert" data-pg-stories-name="mert" data-pg-stories-avatar="https://picsum.photos/id/1025/160/160">
-                <div data-pg-stories-item data-pg-stories-time="5h"><video src="./media/dusk.mp4" muted playsinline></video></div>
-                <div data-pg-stories-item data-pg-stories-time="4h"><img src="https://picsum.photos/id/1025/720/1280" alt="A dog in a blanket" /></div>
-            </div>
-            <div data-pg-stories-user="deniz" data-pg-stories-name="deniz" data-pg-stories-avatar="https://picsum.photos/id/1015/160/160">
-                <div data-pg-stories-item data-pg-stories-time="8h"><img src="https://picsum.photos/id/1015/720/1280" alt="A river between rocks" /></div>
+            <div data-pg-stories-user="deniz" data-joined="June 2020" data-place="Norway" data-pg-stories-name="deniz" data-pg-stories-avatar="https://picsum.photos/id/1015/160/160">
+                <div data-pg-stories-item data-pg-stories-time="8h" data-pg-stories-liked data-pg-stories-music="North Echo · Fjord Lights"><img loading="lazy" src="https://picsum.photos/id/1015/720/1280" alt="A river between rocks" /></div>
                 <div data-pg-stories-item data-pg-stories-time="7h" data-pg-stories-duration="8000">
                     <div class="card">
                         <h3>Any HTML is a story</h3>
@@ -254,7 +1040,7 @@
                     </div>
                 </div>
             </div>
-            <div data-pg-stories-user="plusguard" data-pg-stories-name="plusguard" data-pg-stories-avatar="https://picsum.photos/id/1036/160/160">
+            <div data-pg-stories-user="plusguard" data-pg-stories-verified data-joined="January 2024" data-place="Türkiye" data-pg-stories-name="plusguard" data-pg-stories-avatar="https://picsum.photos/id/1036/160/160">
                 <div data-pg-stories-item data-pg-stories-time="now" data-pg-stories-duration="9000">
                     <div class="card">
                         <h3>stories</h3>
@@ -267,23 +1053,40 @@
                         </ul>
                     </div>
                 </div>
-                <div data-pg-stories-item data-pg-stories-time="now"><video src="./media/bubbles.mp4" muted playsinline></video></div>
+                <div data-pg-stories-item data-pg-stories-time="now"><video src="./media/bubbles.mp4" muted playsinline preload="none"></video></div>
             </div>
-            <div data-pg-stories-user="selin" data-pg-stories-name="selin" data-pg-stories-avatar="https://picsum.photos/id/1069/160/160">
-                <div data-pg-stories-item data-pg-stories-time="12h"><img src="https://picsum.photos/id/1069/720/1280" alt="A jellyfish" /></div>
+            <div data-pg-stories-user="selin" data-joined="May 2017" data-place="Portugal" data-pg-stories-name="selin" data-pg-stories-avatar="https://picsum.photos/id/1069/160/160">
+                <div data-pg-stories-item data-pg-stories-time="12h"><img loading="lazy" src="https://picsum.photos/id/1069/720/1280" alt="A jellyfish" /></div>
                 <!-- A landscape picture: cover crops it to the card. -->
-                <div data-pg-stories-item data-pg-stories-time="11h"><img src="https://picsum.photos/id/1043/1280/720" alt="A field under a cloudy sky" /></div>
+                <div data-pg-stories-item data-pg-stories-time="11h"><img loading="lazy" src="https://picsum.photos/id/1043/1280/720" alt="A field under a cloudy sky" /></div>
             </div>
         </div>
 
         <script type="module">
-            import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v2.0.0/dist/index.js";
+            import { initStories, showStoriesNotice } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/dist/index.js";
 
             initStories();
 
             // The switches: what a stylesheet, or the markup, would set.
             const query = new URLSearchParams(location.search);
             const group = document.querySelector("[data-pg-stories]");
+            // plusguard's stories were shared "now": the moment it was, as a
+            // CMS would write it — the viewer counts on from it (now, 1m, …).
+            const opened = new Date().toISOString();
+            group.querySelectorAll('[data-pg-stories-user="plusguard"] [data-pg-stories-item]').forEach((item) =>
+                item.setAttribute("data-pg-stories-at", opened),
+            );
+            const l = query.get("l");
+            if (!l) {
+                // What a site's stylesheet would say: the cube on a tablet and
+                // a phone, the carousel above. Narrow the window, open a story,
+                // widen it — the viewer follows.
+                const rule = document.createElement("style");
+                rule.textContent = "@media (width < 64rem) { :root { --pg-stories-layout: cube; } }";
+                document.head.append(rule);
+            } else if (l) {
+                document.documentElement.style.setProperty("--pg-stories-layout", l);
+            }
             const e = query.get("e");
             if (e) group.setAttribute("data-pg-stories-end", e);
             const d = query.get("d");
@@ -296,6 +1099,130 @@
                 a.href = `?${next}`;
                 if ((query.get(a.dataset.q) ?? "") === a.dataset.v) a.setAttribute("aria-current", "true");
             });
+            // The reply box grows with its words (the viewer copies it under
+            // every card, so the listeners are on the document). Sending is
+            // the site's — here it only clears.
+            document.addEventListener("input", (e) => {
+                const box = e.target.closest?.(".reply textarea");
+                if (!box) return;
+                box.style.height = "auto";
+                box.style.height = `${box.scrollHeight}px`;
+            });
+            document.addEventListener("submit", (e) => {
+                const form = e.target.closest?.(".reply");
+                if (!form) return;
+                e.preventDefault();
+                const box = form.querySelector("textarea");
+                if (!box.value.trim()) return;
+                box.value = "";
+                box.style.height = "";
+                box.blur();
+                showStoriesNotice("Sent");
+            });
+            // Enter sends; Shift + Enter, a new line.
+            document.addEventListener("keydown", (e) => {
+                const box = e.target.closest?.(".reply textarea");
+                if (!box || e.key !== "Enter" || e.shiftKey) return;
+                e.preventDefault();
+                box.form.requestSubmit();
+            });
+
+            // A quick reaction: the viewer tells the page whose story, which
+            // reaction. A site sends it — or sends a visitor not signed in
+            // to sign in — then says so over the story: e.detail.notice().
+            document.addEventListener("pg-stories-reaction", (e) => {
+                e.detail.notice("Sent");
+            });
+            // A heart: the viewer fills it and says so — whose story, which,
+            // liked or not. A site keeps it in its CMS (or asks to sign in);
+            // the next time, data-pg-stories-liked on the story fills it.
+            document.addEventListener("pg-stories-like", (e) => {
+                console.log("like", e.detail.user, e.detail.story, e.detail.liked);
+            });
+
+            // The "⋯": the site's own menu, and the windows it opens. The
+            // viewer only holds the story while the button says it is open.
+            // A site would do this with targetFunctions; the example keeps to
+            // itself, so it needs no other package.
+            const sheet = document.createElement("dialog");
+            sheet.className = "sheet";
+            document.body.append(sheet);
+            let opener = null; // the "⋯" button whose menu opened the window
+            const setOpen = (button, open) => {
+                button.setAttribute("aria-expanded", String(open));
+                button.nextElementSibling.hidden = !open;
+            };
+            const closeMenus = () =>
+                document.querySelectorAll(".more-button[aria-expanded='true']").forEach((b) => {
+                    if (b !== opener) setOpen(b, false);
+                });
+            const person = (card) =>
+                document.querySelector(`[data-pg-stories] [data-pg-stories-user="${card.getAttribute("data-pg-stories-for")}"]`);
+            const reasons = [
+                "I just don't like it",
+                "Bullying or unwanted contact",
+                "Suicide, self-injury or eating disorders",
+                "Violence, hate or exploitation",
+                "Selling or promoting restricted items",
+                "Nudity or sexual activity",
+                "Scam, fraud or spam",
+                "False information",
+            ];
+            const openSheet = (kind, button) => {
+                const who = person(button.closest("[data-pg-stories-for]"));
+                const name = who.getAttribute("data-pg-stories-name");
+                if (kind === "report") {
+                    sheet.innerHTML = `<header><button type="button" data-close aria-label="Close">✕</button><span>Report</span><span></span></header>
+                        <h3>Why are you reporting this story?</h3>
+                        <ul>${reasons.map((r) => `<li><button type="button" data-reason="${r}">${r}</button></li>`).join("")}</ul>`;
+                } else {
+                    sheet.innerHTML = `<header><span></span><span>About this account</span><span></span></header>
+                        <div class="about">
+                            <img src="${who.getAttribute("data-pg-stories-avatar")}" alt="" />
+                            <strong>${name}</strong>
+                            <p>To help keep the community real, the site shows information about the accounts here.</p>
+                            <dl>
+                                <div><dt>Date joined</dt><dd>${who.getAttribute("data-joined")}</dd></div>
+                                <div><dt>Account based in</dt><dd>${who.getAttribute("data-place")}</dd></div>
+                            </dl>
+                        </div>
+                        <footer><button type="button" data-close>Close</button></footer>`;
+                }
+                opener = button;
+                sheet.showModal();
+            };
+            sheet.addEventListener("close", () => {
+                if (opener) setOpen(opener, false);
+                opener = null;
+            });
+            sheet.addEventListener("click", (e) => {
+                if (e.target === sheet || e.target.closest("[data-close]")) return sheet.close();
+                const reason = e.target.closest("[data-reason]");
+                if (reason) {
+                    sheet.close();
+                    showStoriesNotice("Thanks for letting us know");
+                }
+            });
+            document.addEventListener("click", (e) => {
+                const button = e.target.closest(".more-button");
+                if (button) {
+                    const open = button.getAttribute("aria-expanded") !== "true";
+                    closeMenus();
+                    return setOpen(button, open);
+                }
+                const item = e.target.closest(".more-menu [data-open]");
+                if (item) {
+                    const owner = item.closest(".more").querySelector(".more-button");
+                    owner.nextElementSibling.hidden = true; // the menu goes; the window keeps it "open"
+                    return openSheet(item.dataset.open, owner);
+                }
+                if (!e.target.closest(".more-menu")) closeMenus();
+            });
+            // Escape: the open menu first — the viewer leaves the keys to it.
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && !sheet.open) closeMenus();
+            });
+
             document.getElementById("forget").addEventListener("click", () => {
                 localStorage.removeItem("pg-stories-seen");
                 location.reload();

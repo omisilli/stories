@@ -2,28 +2,73 @@
  * stories — the CSS half: the viewer.
  *
  * Set on :root (or the viewer), in media queries for each screen size:
+ *   --pg-stories-layout       carousel (default): the current person's card in
+ *                             the middle, two each side, smaller, to press ·
+ *                             cube: one card, the next person on a 3D cube
  *   --pg-stories-aspect       the card's width ÷ height. Default 0.5625 (9:16)
  *   --pg-stories-radius       its corners. Default 0.75rem; 0 on a phone
  *   --pg-stories-backdrop     behind the card
  *   --pg-stories-bar          a bar, filled · --pg-stories-bar-track, empty
  *   --pg-stories-press-shade  how dark the side pressed gets. Default 0.25
+ *   --pg-stories-typing-shade how dark the story gets while its footer's box
+ *                             is pressed into. Default 0.55
+ *   --pg-stories-ring         the ring around a waiting card's avatar ·
+ *   --pg-stories-ring-seen    the same, once seen
  *
- * Below 40rem the card fills the screen. index.ts writes --pg-stories-half
+ * Breakpoints are Tailwind's: sm 40rem, md 48rem, lg 64rem.
+ * From 64rem the carousel shows the cards beside, arrows by the card, a ×
+ * in the corner and the site's logo (data-pg-stories-logo in the group);
+ * below, one card at a time, sliding. Below 40rem the card fills the screen. index.ts writes --pg-stories-half
  * (half the card's width, for the cube), --pg-stories-progress on each bar,
  * and --pg-stories-drag (0–1, pulled down to close).
  *
  * States: data-pg-stories-state on the viewer — opening, open, closing;
  * data-pg-stories-held="true" while a finger holds it;
+ * data-pg-stories-paused="true" while its pause button holds it;
+ * data-pg-stories-layout on the viewer — carousel, cube;
  * data-pg-stories-seen="true" on the buttons of users seen to the end.
  */
 
+@property --pg-stories-layout {
+    syntax: "carousel | cube";
+    inherits: true;
+    initial-value: carousel;
+}
+
 :root {
     --pg-stories-aspect: 0.5625;
-    --pg-stories-radius: 0.75rem;
-    --pg-stories-backdrop: rgb(18 18 20 / 0.97);
+    --pg-stories-radius: 0.5rem;
+    --pg-stories-backdrop: #1a1a1a;
     --pg-stories-bar: #fff;
     --pg-stories-bar-track: rgb(255 255 255 / 0.35);
     --pg-stories-press-shade: 0.25;
+    --pg-stories-typing-shade: 0.55;
+    --pg-stories-ring: linear-gradient(45deg, #f9c20c 15%, #f4a012 25%, #f95e1a 41%, #f30863 59%, #df03a8 75%, #cc02c1 85%);
+    --pg-stories-ring-seen: rgb(255 255 255 / 0.6);
+}
+
+/* Opened from a link (#stories=…, early.js): the page covered by the
+   viewer's dark until the story is there — the page never shows first. */
+html[data-pg-stories-linked]::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 2147482999;
+    background: var(--pg-stories-backdrop);
+}
+/* …and the viewer comes without its fade. */
+[data-pg-stories-viewer][data-pg-stories-instant] {
+    animation: none;
+}
+
+/* The heart and the plane in the footer fade a little under a mouse. */
+@media (hover: hover) and (pointer: fine) {
+    :is([data-pg-stories-like], [data-pg-stories-share]) {
+        transition: opacity 0.15s;
+    }
+    :is([data-pg-stories-like], [data-pg-stories-share]):hover {
+        opacity: 0.8;
+    }
 }
 
 /* The page stays still while it is open. With Lenis: autoToggle: true. */
@@ -37,6 +82,7 @@ html:has([data-pg-stories-viewer]) {
     z-index: 2147483000;
     display: grid;
     place-items: center;
+    overflow: clip;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
@@ -66,27 +112,49 @@ html:has([data-pg-stories-viewer]) {
 }
 
 /* The card: as tall as the screen allows, at its aspect. */
+/*
+ * The card: the story always at its aspect (9:16), as tall as the screen
+ * allows — never stretched to the screen, never cut to fit it. Below 64rem
+ * the site's footer sits under the story, not on it (--pg-stories-foot
+ * tall), and the two together fit the screen; the rest stays dark. Below
+ * 40rem it goes edge to edge.
+ */
 [data-pg-stories-stage] {
+    --pg-stories-foot: 0px;
+    --pg-stories-room: calc(100vw - 2rem);
+    --pg-stories-w: min(
+        var(--pg-stories-room),
+        calc((100dvh - 1.75rem - var(--pg-stories-foot)) * var(--pg-stories-aspect))
+    );
     position: relative;
-    width: min(calc(100vw - 2rem), calc((100dvh - 3rem) * var(--pg-stories-aspect)));
-    aspect-ratio: var(--pg-stories-aspect);
+    width: var(--pg-stories-w);
+    height: calc(var(--pg-stories-w) / var(--pg-stories-aspect) + var(--pg-stories-foot));
     perspective: 1400px;
     transform-origin: 50% 0;
+}
+@media (width < 64rem) {
+    [data-pg-stories-footed="true"] [data-pg-stories-stage] {
+        --pg-stories-foot: 4rem;
+    }
 }
 @media (width < 40rem) {
     :root {
         --pg-stories-radius: 0px;
     }
     [data-pg-stories-stage] {
-        width: 100vw;
-        height: 100dvh;
-        aspect-ratio: auto;
+        --pg-stories-room: 100vw;
+        --pg-stories-w: min(
+            var(--pg-stories-room),
+            calc((100dvh - var(--pg-stories-foot)) * var(--pg-stories-aspect))
+        );
     }
 }
 
 [data-pg-stories-cube] {
     position: absolute;
     inset: 0;
+}
+[data-pg-stories-layout="cube"] [data-pg-stories-cube] {
     transform-style: preserve-3d;
     transform: translateZ(calc(var(--pg-stories-half) * -1));
 }
@@ -101,14 +169,223 @@ html:has([data-pg-stories-viewer]) {
     -webkit-backface-visibility: hidden;
 }
 /* The cube: the faces around its centre. */
-[data-pg-stories-side="current"] {
+[data-pg-stories-layout="cube"] [data-pg-stories-side="current"] {
     transform: translateZ(var(--pg-stories-half));
 }
-[data-pg-stories-side="next"] {
+[data-pg-stories-layout="cube"] [data-pg-stories-side="next"] {
     transform: rotateY(90deg) translateZ(var(--pg-stories-half));
 }
-[data-pg-stories-side="prev"] {
+[data-pg-stories-layout="cube"] [data-pg-stories-side="prev"] {
     transform: rotateY(-90deg) translateZ(var(--pg-stories-half));
+}
+[data-pg-stories-layout="cube"] [data-pg-stories-preview],
+[data-pg-stories-layout="cube"] [data-pg-stories-arrow],
+[data-pg-stories-layout="cube"] [data-pg-stories-corner],
+[data-pg-stories-layout="cube"] [data-pg-stories-brand] {
+    display: none;
+}
+
+/*
+ * The carousel. One card at a time, sliding, below 64rem; from 64rem the
+ * current one in the middle and two each side at 40%, a gap of 11.7% of a
+ * card between them — the measures of a feed's own. A card moving to the
+ * middle grows, the one leaving it shrinks; index.ts only changes their
+ * places.
+ */
+[data-pg-stories-layout="carousel"] [data-pg-stories-cube] {
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-pg-stories-layout="carousel"] [data-pg-stories-face] {
+    transition:
+        transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.35s;
+}
+[data-pg-stories-layout="carousel"] [data-pg-stories-side="current"] {
+    z-index: 1;
+}
+/* Narrow: the cards beside wait just past the screen's edges, and slide in
+   with the finger. */
+[data-pg-stories-layout="carousel"] [data-pg-stories-side="prev"] {
+    transform: translateX(calc(-50vw - 50% - 1rem));
+}
+[data-pg-stories-layout="carousel"] [data-pg-stories-side="next"] {
+    transform: translateX(calc(50vw + 50% + 1rem));
+}
+[data-pg-stories-layout="carousel"] :is([data-pg-stories-side="prev2"], [data-pg-stories-side="gone-prev"]) {
+    transform: translateX(calc(-50vw - 150% - 2rem));
+    opacity: 0;
+}
+[data-pg-stories-layout="carousel"] :is([data-pg-stories-side="next2"], [data-pg-stories-side="gone-next"]) {
+    transform: translateX(calc(50vw + 150% + 2rem));
+    opacity: 0;
+}
+@media (width >= 64rem) {
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="prev"] {
+        transform: translateX(-81.7%) scale(var(--pg-stories-beside, 0.4));
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="next"] {
+        transform: translateX(81.7%) scale(var(--pg-stories-beside, 0.4));
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="prev2"] {
+        transform: translateX(-133.4%) scale(var(--pg-stories-beside, 0.4));
+        opacity: 1;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="next2"] {
+        transform: translateX(133.4%) scale(var(--pg-stories-beside, 0.4));
+        opacity: 1;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="gone-prev"] {
+        transform: translateX(-185%) scale(var(--pg-stories-beside, 0.4));
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-side="gone-next"] {
+        transform: translateX(185%) scale(var(--pg-stories-beside, 0.4));
+    }
+    /* A card beside is pressed to come to the middle — and, with a mouse,
+       grows a little under it. */
+    [data-pg-stories-layout="carousel"] [data-pg-stories-face]:not([data-pg-stories-side="current"]) {
+        cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        [data-pg-stories-layout="carousel"]
+            :is([data-pg-stories-side="prev"], [data-pg-stories-side="next"], [data-pg-stories-side="prev2"], [data-pg-stories-side="next2"]):hover {
+            --pg-stories-beside: 0.43;
+        }
+    }
+}
+
+/* A card beside: its preview instead of bars, header and footer. */
+[data-pg-stories-layout="carousel"] [data-pg-stories-face]:not([data-pg-stories-side="current"]) :is([data-pg-stories-bars], [data-pg-stories-head], [data-pg-stories-footer]),
+[data-pg-stories-layout="carousel"] [data-pg-stories-side="current"] [data-pg-stories-preview] {
+    opacity: 0;
+    visibility: hidden;
+}
+[data-pg-stories-face] {
+    /* The preview is sized to the card, so it shrinks with it. */
+    container-type: inline-size;
+}
+[data-pg-stories-preview] {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 1.5cqw;
+    color: #fff;
+    text-align: center;
+    font-size: 9cqw;
+    line-height: 1.2;
+    text-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+    pointer-events: none;
+    transition: opacity 0.25s;
+}
+[data-pg-stories-preview-ring] {
+    position: relative;
+    width: 41cqw;
+    aspect-ratio: 1;
+    padding: 2.5cqw;
+    margin-bottom: 3cqw;
+    border-radius: 50%;
+}
+[data-pg-stories-preview-ring]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.4cqw;
+    border-radius: 50%;
+    background: var(--pg-stories-ring);
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+[data-pg-stories-preview][data-pg-stories-seen="true"] [data-pg-stories-preview-ring]::before {
+    background: var(--pg-stories-ring-seen);
+}
+[data-pg-stories-preview-ring] img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgb(255 255 255 / 0.15);
+}
+[data-pg-stories-preview-name] {
+    font-weight: 600;
+}
+
+/* The arrows by the card, the corner ×, the logo: a wide carousel's. */
+[data-pg-stories-arrow],
+[data-pg-stories-corner],
+[data-pg-stories-brand] {
+    display: none;
+}
+@media (width >= 64rem) {
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow] {
+        position: absolute;
+        top: 50%;
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        width: 1.6rem;
+        height: 1.6rem;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        color: #262626;
+        background: rgb(255 255 255 / 0.85);
+        cursor: pointer;
+        translate: 0 -50%;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow][hidden] {
+        display: none;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow] svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    /* Each chevron a pixel toward its open side — so it sits in the middle. */
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow="prev"] svg {
+        padding-right: 1px;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow="next"] svg {
+        padding-left: 1px;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow="prev"] {
+        right: calc(100% + 1.25rem);
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-arrow="next"] {
+        left: calc(100% + 1.25rem);
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-corner] {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        display: grid;
+        place-items: center;
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        border: 0;
+        color: #fff;
+        background: none;
+        cursor: pointer;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-corner] svg {
+        width: 2rem;
+        height: 2rem;
+    }
+    /* The corner × closes; the card's own × is not needed here. */
+    [data-pg-stories-layout="carousel"] [data-pg-stories-head] [data-pg-stories-close] {
+        display: none;
+    }
+    [data-pg-stories-layout="carousel"] [data-pg-stories-brand] {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        display: block;
+        color: #fff;
+    }
 }
 
 /* The stories: one shown, filling the card. */
@@ -116,6 +393,10 @@ html:has([data-pg-stories-viewer]) {
 [data-pg-stories-slide] {
     position: absolute;
     inset: 0;
+}
+/* The story above the footer's room. */
+[data-pg-stories-slides] {
+    bottom: var(--pg-stories-foot);
 }
 [data-pg-stories-slide][data-pg-stories-active="false"] {
     visibility: hidden;
@@ -128,6 +409,11 @@ html:has([data-pg-stories-viewer]) {
     object-fit: cover;
     pointer-events: none;
 }
+/* No picture in a story can be dragged away — however deep in its HTML:
+   the browser's own drag would cut a swipe short. */
+[data-pg-stories-viewer] :is(img, video) {
+    -webkit-user-drag: none;
+}
 
 /* A shade at the top, so the bars and the name read on any picture. */
 [data-pg-stories-face]::after {
@@ -139,11 +425,14 @@ html:has([data-pg-stories-viewer]) {
     pointer-events: none;
 }
 
+/* Measured off a feed's card: the bars 1rem in from its sides, the header
+   below them, its buttons' centres 35px apart, the last 2.25rem from the
+   card's edge. */
 [data-pg-stories-bars] {
     position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    right: 0.6rem;
+    top: 1.1rem;
+    left: 1rem;
+    right: 1rem;
     z-index: 2;
     display: flex;
     gap: 4px;
@@ -161,18 +450,22 @@ html:has([data-pg-stories-viewer]) {
 
 [data-pg-stories-head] {
     position: absolute;
-    top: 1.25rem;
-    left: 0.75rem;
-    right: 0.5rem;
+    top: 1.75rem;
+    left: 1rem;
+    right: 1.375rem;
     z-index: 2;
     display: flex;
     align-items: center;
     gap: 0.6rem;
     color: #fff;
-    font: 600 0.9rem/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* The page's own font: the viewer is built on <body>. */
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.2;
     text-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
 }
 [data-pg-stories-head-avatar] {
+    flex: none;
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
@@ -182,7 +475,250 @@ html:has([data-pg-stories-viewer]) {
     font-weight: 400;
     opacity: 0.7;
 }
-[data-pg-stories-head] button {
+/* The name and time on one line, the music under them. */
+/* Nothing in the header wraps or pushes: a long name, a long song — one
+   line each, cut with an ellipsis. */
+[data-pg-stories-head-who] {
+    display: grid;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+[data-pg-stories-head-line] {
+    display: flex;
+    gap: 0.5rem;
+    min-width: 0;
+    white-space: nowrap;
+}
+/* A verified account: the badge after the name. */
+[data-pg-stories-verified] {
+    display: inline-grid;
+    flex: none;
+    align-self: center;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-left: -0.3rem;
+}
+[data-pg-stories-verified] svg {
+    width: 100%;
+    height: 100%;
+}
+[data-pg-stories-head-name] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+[data-pg-stories-head-time] {
+    flex: none;
+}
+[data-pg-stories-head-music] {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+[data-pg-stories-head-music][hidden] {
+    display: none;
+}
+[data-pg-stories-head-music] svg {
+    flex: none;
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+/* "See translation", under the name — a button, the size of the music. */
+[data-pg-stories-translate] {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0;
+    border: 0;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: inherit;
+    background: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+[data-pg-stories-translate][hidden] {
+    display: none;
+}
+[data-pg-stories-translate] svg {
+    width: 0.7rem;
+    height: 0.7rem;
+}
+
+/* The translation: a box over the viewer, the story held behind it. A
+   press beside the box, or Escape, closes it. */
+[data-pg-stories-dialog] {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(0 0 0 / 0.6);
+    animation: pg-stories-in 0.2s ease both;
+}
+[data-pg-stories-dialog-box] {
+    display: grid;
+    gap: 1.25rem;
+    width: min(100%, 24rem);
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    color: #000;
+    background: #fff;
+    text-align: left;
+    outline: none;
+}
+[data-pg-stories-dialog-box] p {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+[data-pg-stories-dialog-box] small {
+    font-size: 0.85rem;
+    color: #737373;
+}
+
+/* Quick reactions: over the story, dimmed, while the footer's box is
+   pressed into and empty. Each a button; a press tells the site
+   (pg-stories-reaction). */
+[data-pg-stories-quick] {
+    position: absolute;
+    inset: 0 0 var(--pg-stories-foot);
+    z-index: 3;
+    display: grid;
+    place-content: end center;
+    justify-items: center;
+    gap: 1.25rem;
+    padding: 0 1rem 6.5rem;
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.2s,
+        visibility 0.2s;
+}
+[data-pg-stories-reacting="true"] [data-pg-stories-side="current"] [data-pg-stories-quick] {
+    opacity: 1;
+    visibility: visible;
+}
+[data-pg-stories-quick] strong {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+[data-pg-stories-quick-grid] {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 0.75rem 1.5rem;
+}
+[data-pg-stories-reaction] {
+    padding: 0;
+    border: 0;
+    font-size: 2.4rem;
+    line-height: 1.1;
+    background: none;
+    cursor: pointer;
+    transition: scale 0.15s;
+}
+[data-pg-stories-reaction]:hover {
+    scale: 1.15;
+}
+@media (width < 64rem) {
+    [data-pg-stories-quick] {
+        padding-bottom: 2rem;
+    }
+}
+
+/* A short word over the story — "Sent" — said by the site. */
+[data-pg-stories-notice] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 6;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    color: #fff;
+    background: rgb(38 38 38 / 0.85);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    translate: -50% -50%;
+    pointer-events: none;
+    animation: pg-stories-in 0.2s ease both;
+}
+[data-pg-stories-notice="out"] {
+    animation: pg-stories-out 0.25s ease both;
+}
+
+/* The heart in the site's footer (data-pg-stories-like): red when liked,
+   a little jump as it fills. */
+[data-pg-stories-like][aria-pressed="true"] svg {
+    fill: var(--pg-stories-like, #ff3040);
+    stroke: var(--pg-stories-like, #ff3040);
+}
+[data-pg-stories-like][data-pg-stories-jump] svg {
+    animation: pg-stories-jump 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+@keyframes pg-stories-jump {
+    0% {
+        scale: 1;
+    }
+    35% {
+        scale: 1.3;
+    }
+    60% {
+        scale: 0.9;
+    }
+    100% {
+        scale: 1;
+    }
+}
+
+/* The site's footer, at the card's foot on a shade: a reply box, a like,
+   a send — its own markup and look; only its place is set here. */
+[data-pg-stories-footer] {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 4;
+    min-width: 0;
+    overflow: hidden;
+    padding: 2.5rem 0.75rem 0.75rem;
+    background: linear-gradient(transparent, rgb(0 0 0 / 0.35));
+    transition: opacity 0.2s;
+}
+/* Below 64rem: under the story, on the dark — its own room. */
+@media (width < 64rem) {
+    [data-pg-stories-footer] {
+        /* At least its room; a reply box that grows rises over the story. */
+        min-height: var(--pg-stories-foot);
+        padding: 0.6rem 0.75rem;
+        background: none;
+    }
+}
+[data-pg-stories-held="true"] [data-pg-stories-footer] {
+    opacity: 0;
+}
+/* The header's buttons close together, as a feed's are: 1.75rem each,
+   7px between them — their centres 35px apart. */
+[data-pg-stories-head] > button,
+[data-pg-stories-more] > button {
+    width: 1.75rem !important;
+}
+[data-pg-stories-head] > :is(button, [data-pg-stories-more]) + :is(button, [data-pg-stories-more]) {
+    margin-left: calc(7px - 0.6rem);
+}
+[data-pg-stories-head] > button {
+    flex: none;
     display: grid;
     place-items: center;
     width: 2.5rem;
@@ -194,18 +730,23 @@ html:has([data-pg-stories-viewer]) {
     background: none;
     cursor: pointer;
 }
-[data-pg-stories-head] button svg {
+[data-pg-stories-head] > button svg {
     width: 1.5rem;
     height: 1.5rem;
     filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.4));
 }
-[data-pg-stories-head] button[hidden] {
+[data-pg-stories-head] > button[hidden] {
     display: none;
 }
 [data-pg-stories-sound] {
     margin-left: auto;
 }
-[data-pg-stories-sound][hidden] + [data-pg-stories-close] {
+/* The site's "⋯" — its own button and menu; only its place is set here. */
+[data-pg-stories-more] {
+    position: relative;
+    flex: none;
+}
+[data-pg-stories-sound][hidden] + [data-pg-stories-pause] {
     margin-left: auto;
 }
 
@@ -244,6 +785,14 @@ html:has([data-pg-stories-viewer]) {
     opacity: var(--pg-stories-shade, 0);
     pointer-events: none;
 }
+[data-pg-stories-layout="carousel"] [data-pg-stories-shade] {
+    transition: opacity 0.35s;
+}
+/* The footer's box pressed into: the story dims behind it. */
+[data-pg-stories-typing="true"] [data-pg-stories-side="current"] [data-pg-stories-shade] {
+    opacity: var(--pg-stories-typing-shade);
+    transition: opacity 0.2s;
+}
 
 /* Held: the bars and the name step back, the story stays. */
 [data-pg-stories-bars],
@@ -261,5 +810,10 @@ html:has([data-pg-stories-viewer]) {
     [data-pg-stories-viewer],
     [data-pg-stories-viewer][data-pg-stories-state="closing"] {
         animation-duration: 1ms;
+    }
+    [data-pg-stories-cube],
+    [data-pg-stories-face],
+    [data-pg-stories-shade] {
+        transition: none !important;
     }
 }
