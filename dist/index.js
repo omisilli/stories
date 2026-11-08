@@ -602,6 +602,12 @@ function openViewer(users, start, opener, group, startStory = 0, instant = false
             ahead.src = nextTune;
         if (s === face.slides.length - 1)
             markSeen(users[u].id);
+        // The cards beside: their rings grey as soon as a person is seen to
+        // the end — not only when built.
+        const seenNow = seenSet();
+        faces.forEach((one, i) => one.root
+            .querySelector("[data-pg-stories-preview]")
+            ?.setAttribute("data-pg-stories-seen", String(seenNow.has(users[i].id))));
     };
     const durationOf = () => {
         const own = Number(current().slides[s].getAttribute("data-pg-stories-duration"));

@@ -656,6 +656,14 @@ function openViewer(
         const nextTune = (face.slides[s + 1] || faces.get(u + 1)?.slides[0])?.getAttribute("data-pg-stories-music-src");
         if (nextTune && ahead.getAttribute("src") !== nextTune) ahead.src = nextTune;
         if (s === face.slides.length - 1) markSeen(users[u].id);
+        // The cards beside: their rings grey as soon as a person is seen to
+        // the end — not only when built.
+        const seenNow = seenSet();
+        faces.forEach((one, i) =>
+            one.root
+                .querySelector("[data-pg-stories-preview]")
+                ?.setAttribute("data-pg-stories-seen", String(seenNow.has(users[i].id))),
+        );
     };
 
     const durationOf = (): number => {

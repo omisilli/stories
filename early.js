@@ -11,7 +11,7 @@
  * A classic script, in <head>, before the page's markup — not deferred, not
  * a module:
  *
- *   <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.0/early.js"></script>
+ *   <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.1/early.js"></script>
  *
  * or its text written inline there. No dependencies; nothing to call.
  */
