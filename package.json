@@ -1,6 +1,6 @@
 {
     "name": "@plusguard/stories",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Instagram-like stories, from markup: a row of avatars that open a full-screen viewer — progress bars, autoplay, tap to go on, hold to pause, a 3D cube between people, videos with sound. No dependencies, framework-agnostic.",
     "type": "module",
     "main": "./dist/index.js",

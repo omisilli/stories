@@ -450,6 +450,10 @@ function openViewer(users, start, opener, group, startStory = 0, instant = false
     let paused = false;
     let typing = false;
     let sharing = false; // the system's share sheet is open
+    // Where each person was left: back to them, the story left on — not
+    // their first again. A person not yet opened starts at their first.
+    const visited = new Map();
+    const resumeAt = (i) => Math.min(visited.get(i) ?? 0, users[i].items.length - 1);
     // Liked stories, while open: "user:story". The first state is the
     // markup's (data-pg-stories-liked, from the CMS).
     const liked = new Set();
@@ -526,6 +530,7 @@ function openViewer(users, start, opener, group, startStory = 0, instant = false
             setPaused(false);
         const face = current();
         wake(face.slides[s]); // its picture or video, before it plays
+        visited.set(u, s);
         face.slides.forEach((slide, i) => {
             const now = i === s;
             slide.setAttribute("data-pg-stories-active", String(now));
@@ -711,7 +716,7 @@ function openViewer(users, start, opener, group, startStory = 0, instant = false
     // beyond the edge; those that leave it slide out, then go.
     const slide = (dir) => {
         u += dir;
-        s = 0;
+        s = resumeAt(u);
         for (let i = u - 2; i <= u + 2; i++) {
             if (!users[i] || faces.has(i))
                 continue;
@@ -748,7 +753,7 @@ function openViewer(users, start, opener, group, startStory = 0, instant = false
             return slide(dir);
         const done = () => {
             u += dir;
-            s = 0;
+            s = resumeAt(u);
             layout();
             show();
             turning = false;

@@ -7,7 +7,7 @@ screen on a phone, a card on a computer. No dependencies,
 framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v3.0.0
+npm install github:omisilli/stories#v3.0.1
 ```
 
 ```ts
@@ -37,9 +37,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/dist/index.js";
 
     initStories();
 </script>
@@ -58,6 +58,7 @@ the newest 3.x release.
 | Hold anywhere                        | Paused while held; the bars and the name step back    |
 | Drag sideways                        | The next or the person before — it follows the finger, and goes on past a quarter, or with a flick. The carousel moves with a finger only; with a mouse, its arrows, cards beside and taps do it. The cube turns with a mouse too |
 | Press a card beside (carousel)       | That person comes to the middle — growing, the one there shrinking to the side |
+| Back to a person seen a moment ago   | Their story you left, not their first again           |
 | The arrows by the card (carousel)    | The story before, the next one |
 | The pause button                     | Paused until pressed again — or until another story, which plays from its start |
 | Escape · × · the browser's Back      | Closed — on a wide carousel, the × is in the corner   |
@@ -524,7 +525,7 @@ browser reads it:
 ```html
 <head>
     …
-    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.0/early.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.0.1/early.js"></script>
 </head>
 ```
 
