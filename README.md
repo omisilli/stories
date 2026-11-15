@@ -578,8 +578,9 @@ layout (by screen — the cube below 64rem, the default here — carousel or cub
 (`data-pg-stories-end`), how long a picture stays, and forgetting what was
 seen.
 
-The photos are from [Lorem Picsum](https://picsum.photos) — Unsplash
-photos, free to use, loaded from there. The video was made for this example. The music is Chopin's Étude in
+The photos are from [Unsplash](https://unsplash.com), free to use under
+the Unsplash License, cropped to size and kept in `examples/static/media/`
+— nothing loaded from elsewhere. The video was made for this example. The music is Chopin's Étude in
 A-flat major, played for [Musopen](https://musopen.org) and in the public
 domain — from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Frederic_Chopin_-_etude_no._in_a_flat_major,_woo.ogg),
 its first 15 seconds made into `.m4a` as above.
