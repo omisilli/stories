@@ -77,12 +77,14 @@ const people: Person[] = [
  * band of colour, a gap, the photo on a grey disc that holds its place —
  * goes grey and thinner on data-pg-stories-seen="true". Its CSS is in the
  * README ("The avatars") and the static example.
+ * suppressHydrationWarning: early.js, in <head>, marks a seen ring before
+ * React hydrates the button.
  */
 export function Avatars() {
     return (
         <div className="avatars">
             {people.map((p) => (
-                <button key={p.id} type="button" data-pg-stories-open={p.id}>
+                <button key={p.id} type="button" data-pg-stories-open={p.id} suppressHydrationWarning>
                     <span className="ring">
                         <img src={p.avatar} width={160} height={160} alt="" />
                     </span>
@@ -133,7 +135,12 @@ export function Post({ person, image, caption }: { person: Person; image: string
     return (
         <article className="post">
             <header>
-                <button type="button" data-pg-stories-open={person.id} aria-label={`${person.name}'s stories`}>
+                <button
+                    type="button"
+                    data-pg-stories-open={person.id}
+                    aria-label={`${person.name}'s stories`}
+                    suppressHydrationWarning
+                >
                     <span className="ring">
                         <img src={person.avatar} width={80} height={80} alt="" />
                     </span>

@@ -1294,7 +1294,12 @@ export function initStories(): () => void {
     // An address with #stories=… opens that story — on load, and when it
     // changes. The # is taken off first, so closing leaves the page's own.
     const fromHash = (): void => {
-        if (live !== self) return;
+        if (live !== self) {
+            // Ended before it looked, and nothing took over: the page,
+            // uncovered. A newer call looks for itself.
+            if (!live) document.documentElement.removeAttribute("data-pg-stories-linked");
+            return;
+        }
         const match = HASH.exec(location.hash);
         if (!match) return;
         history.replaceState(history.state, "", `${location.pathname}${location.search}`);
@@ -1313,7 +1318,12 @@ export function initStories(): () => void {
     addEventListener("hashchange", fromHash);
     mo.observe(document.body, { childList: true, subtree: true });
     paintSeen();
-    fromHash();
+    // The address is read a moment later — still before the next paint.
+    // React in development starts an effect, ends it and starts it again
+    // at once: read at once, the first start would take the # off and
+    // open the story, its end close it, and the second find no # left.
+    // A microtask runs after all three; only the newest call reads it.
+    queueMicrotask(fromHash);
 
     return () => {
         document.removeEventListener("click", onClick);

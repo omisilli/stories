@@ -7,7 +7,7 @@ screen on a phone, a card on a computer. No dependencies,
 framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v3.1.1
+npm install github:omisilli/stories#v3.1.2
 ```
 
 ```ts
@@ -37,9 +37,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.1/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.1/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/dist/index.js";
 
     initStories();
 </script>
@@ -526,7 +526,7 @@ browser reads it:
 ```html
 <head>
     …
-    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.1/early.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/early.js"></script>
 </head>
 ```
 
@@ -564,7 +564,17 @@ Mount it once, high in the tree; avatars rendered later work too. Render
 the hidden `data-pg-stories` group from your data — see
 [`examples/react/Example.tsx`](examples/react/Example.tsx). If
 `initStories` is called again before the first cleanup runs (React
-remounting in development), only the newest call answers.
+remounting in development), only the newest call answers — and a link to
+a story, read a moment later, is opened by that one.
+
+`early.js` goes in the root layout's `<head>`, as on any page. It marks a
+seen ring before React hydrates the button, so give each
+`data-pg-stories-open` button `suppressHydrationWarning` — or React, in
+development, reports the attribute it did not render as a mismatch:
+
+```tsx
+<button type="button" data-pg-stories-open={p.id} suppressHydrationWarning>
+```
 
 ## Example
 
