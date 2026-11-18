@@ -281,8 +281,16 @@ html:has([data-pg-stories-viewer]) {
 }
 [data-pg-stories-preview-ring] {
     position: relative;
-    width: 41cqw;
+    /* The photo's box: its height fixed here, its width from the 1:1 — the
+       photo inside fills it. The box holds the shape, never the photo. */
+    width: auto;
+    height: 41cqw;
     aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
     padding: 2.5cqw;
     margin-bottom: 3cqw;
     border-radius: 50%;

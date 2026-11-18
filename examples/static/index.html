@@ -10,10 +10,10 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>stories — example</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/index.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/index.css" />
         <!-- The seen marks before the page is drawn: a ring seen before never
              shows as new for a moment. A classic script, here in <head>. -->
-        <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/early.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/early.js"></script>
         <!-- The page's font, SF Pro Text, inline in this file. -->
         <link rel="stylesheet" href="./sf-pro.css" />
         <style>
@@ -247,9 +247,20 @@
                 --ring: 3px;
                 --gap: 4px;
                 position: relative;
-                display: block;
-                width: 5.5rem;
+                /* The photo's box: its height fixed here, its width from the
+                   1:1 — the photo inside fills it (width and height 100%).
+                   The box holds the shape, never the photo: no baseline gap
+                   under an inline image, no box stretched by the photo in
+                   Safari. */
+                --size: 5.5rem;
+                width: auto;
+                height: var(--size);
                 aspect-ratio: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
                 padding: calc(var(--ring) + var(--gap));
                 border-radius: 50%;
             }
@@ -299,7 +310,7 @@
             .avatars .ring {
                 --ring: 2px;
                 --gap: 3px;
-                width: 4.125rem;
+                --size: 4.125rem;
             }
             .avatars .name {
                 max-width: 4.75rem;
@@ -315,7 +326,7 @@
                 .avatars .ring {
                     --ring: 3px;
                     --gap: 4px;
-                    width: 5.5rem;
+                    --size: 5.5rem;
                 }
                 .avatars button {
                     width: 5.5rem;
@@ -367,7 +378,7 @@
             .post header .ring {
                 --ring: 2px;
                 --gap: 2px;
-                width: 2.5rem;
+                --size: 2.5rem;
                 flex: none;
             }
             .post header .who {
@@ -426,7 +437,7 @@
                 background: var(--placeholder);
             }
             .person .ring {
-                width: 2.75rem;
+                --size: 2.75rem;
                 --ring: 2px;
                 --gap: 2px;
             }
@@ -1063,7 +1074,7 @@
         </div>
 
         <script type="module">
-            import { initStories, showStoriesNotice, forgetStoriesSeen } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/dist/index.js";
+            import { initStories, showStoriesNotice, forgetStoriesSeen } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/dist/index.js";
 
             initStories();
 

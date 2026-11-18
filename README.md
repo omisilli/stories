@@ -7,7 +7,7 @@ screen on a phone, a card on a computer. No dependencies,
 framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v3.1.2
+npm install github:omisilli/stories#v3.1.3
 ```
 
 ```ts
@@ -37,9 +37,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/dist/index.js";
 
     initStories();
 </script>
@@ -487,9 +487,16 @@ its place while it loads:
 .ring {
     --ring: 3px; /* the band */
     --gap: 3px;
-    display: block;
-    width: 4.5rem;
+    /* The photo's box: its height fixed here, its width from the 1:1; the
+       photo inside fills it. The box holds the shape, never the photo. */
+    width: auto;
+    height: 4.5rem;
     aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
     padding: var(--ring);
     border-radius: 50%;
     background: linear-gradient(45deg, #ffd600, #ff7a00 25%, #ff0069 55%, #d300c5 80%, #7638fa);
@@ -526,7 +533,7 @@ browser reads it:
 ```html
 <head>
     …
-    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.2/early.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/early.js"></script>
 </head>
 ```
 
