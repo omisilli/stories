@@ -7,7 +7,7 @@ screen on a phone, a card on a computer. No dependencies,
 framework-agnostic.
 
 ```sh
-npm install github:omisilli/stories#v3.1.3
+npm install @plusguard/stories
 ```
 
 ```ts
@@ -37,9 +37,9 @@ initStories();
 ### Without a build step
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@plusguard/stories@3.1.4/index.css" />
 <script type="module">
-    import { initStories } from "https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/dist/index.js";
+    import { initStories } from "https://cdn.jsdelivr.net/npm/@plusguard/stories@3.1.4/dist/index.js";
 
     initStories();
 </script>
@@ -533,7 +533,7 @@ browser reads it:
 ```html
 <head>
     …
-    <script src="https://cdn.jsdelivr.net/gh/omisilli/stories@v3.1.3/early.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@plusguard/stories@3.1.4/early.js"></script>
 </head>
 ```
 
