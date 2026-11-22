@@ -17,18 +17,30 @@
         <!-- The page's font, SF Pro Text, inline in this file. -->
         <link rel="stylesheet" href="./sf-pro.css" />
         <style>
-            /* Black, as a feed is at night. (Light comes later, with a
-               switch.) */
+            /* White, as a feed is by day. */
             :root {
+                --bg: #ffffff;
+                --surface: #efefef;
+                --fg: #0c1014;
+                --muted: #737373;
+                --line: #dbdbdb;
+                --link: #00376b;
+                /* A ring seen to the end. */
+                --seen: #c7c7c7;
+                /* Where a picture will be, until it is there: nothing jumps. */
+                --placeholder: #efefef;
+                color-scheme: light;
+            }
+            /* Black, as a feed is at night: as the switch says — or the
+               system, its default. */
+            :root[data-scheme="dark"] {
                 --bg: #000000;
                 --surface: #262626;
                 --fg: #f5f5f5;
                 --muted: #a8a8a8;
                 --line: #262626;
                 --link: #708dff;
-                /* A ring seen to the end. */
                 --seen: #4f4f4f;
-                /* Where a picture will be, until it is there: nothing jumps. */
                 --placeholder: #262626;
                 color-scheme: dark;
             }
@@ -795,7 +807,49 @@
                 padding-left: 1.1rem;
                 color: rgb(255 255 255 / 0.9);
             }
+            /* The colour-scheme switch. */
+            .scheme {
+                display: inline-flex;
+                width: fit-content;
+                gap: 0.25rem;
+                margin-top: 1rem;
+                padding: 0.25rem;
+                border: 1px solid var(--line);
+                border-radius: 999px;
+            }
+            /* At the top of the feed. */
+            .feed > .scheme {
+                margin: 0 0 1rem;
+            }
+            .scheme button {
+                padding: 0.35rem 0.8rem;
+                margin: 0;
+                border: 0;
+                border-radius: 999px;
+                font: inherit;
+                font-size: 0.8125rem;
+                line-height: 1.2;
+                color: var(--muted);
+                background: none;
+                cursor: pointer;
+            }
+            .scheme button[aria-pressed="true"] {
+                color: var(--bg);
+                background: var(--fg);
+            }
         </style>
+        <script>
+            // Light or dark before the first paint: the switch's choice — one for
+            // every example — or the system's.
+            (() => {
+                let choice = "system";
+                try {
+                    choice = localStorage.getItem("pg-example-scheme") || "system";
+                } catch {}
+                const dark = choice === "dark" || (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+                document.documentElement.dataset.scheme = dark ? "dark" : "light";
+            })();
+        </script>
     </head>
     <body>
         <!-- A social feed's page — only the look: nothing here works but the
@@ -821,6 +875,11 @@
 
         <div class="page">
             <main class="feed">
+                <div class="scheme" role="group" aria-label="Colour scheme">
+                    <button type="button" data-scheme-choice="system">System</button>
+                    <button type="button" data-scheme-choice="light">Light</button>
+                    <button type="button" data-scheme-choice="dark">Dark</button>
+                </div>
                 <div class="tabs"><span>For you</span><span>Following</span></div>
 
                 <!-- The avatars: any button, anywhere, opens a person by id. -->
@@ -1236,6 +1295,41 @@
 
             // Every ring bright again — at once, the page left where it is.
             document.getElementById("forget").addEventListener("click", forgetStoriesSeen);
+        </script>
+        <script>
+            // The colour-scheme switch: one choice for every example, kept in this
+            // browser — an example open in another tab follows it.
+            (() => {
+                const key = "pg-example-scheme";
+                const root = document.documentElement;
+                const system = matchMedia("(prefers-color-scheme: dark)");
+                const buttons = document.querySelectorAll("[data-scheme-choice]");
+                let choice = "system";
+                try {
+                    choice = localStorage.getItem(key) || "system";
+                } catch {}
+                const apply = () => {
+                    const dark = choice === "dark" || (choice === "system" && system.matches);
+                    root.dataset.scheme = dark ? "dark" : "light";
+                    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.schemeChoice === choice)));
+                };
+                buttons.forEach((b) =>
+                    b.addEventListener("click", () => {
+                        choice = b.dataset.schemeChoice;
+                        try {
+                            localStorage.setItem(key, choice);
+                        } catch {}
+                        apply();
+                    }),
+                );
+                system.addEventListener("change", apply);
+                addEventListener("storage", (e) => {
+                    if (e.key !== key) return;
+                    choice = e.newValue || "system";
+                    apply();
+                });
+                apply();
+            })();
         </script>
     </body>
 </html>
